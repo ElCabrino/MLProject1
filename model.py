@@ -24,7 +24,7 @@ class Model:
 
         return w
 
-    def fit_with_cache(self, x, y, h, log):
+    def fit_with_cache(self, x, y, h):
 
         stored_res = self.cache.get(h)
 
@@ -33,15 +33,15 @@ class Model:
                 # print(f'Parameters {h} already computed, skippin')
             return dict(list(zip(stored_res.dtype.names, stored_res)))
 
-        res = self.fit(x, y, h)
+        res, _ = self.fit(x, y, h)
         self.cache.put(h, res)
 
-        if log:
-            print(f'Finished computing {h}.')
+        # if log:
+        #     print(f'Finished computing {h}.')
 
         return { **h, **res }
 
-    def evaluate(self, hs, filename, log=False):
+    def evaluate(self, hs, filename):
         """Applies grid search algorithm to the cartesian product of the parameters
         passed in argument. If a 'file' is given, it will load from this file
         and write into it."""
@@ -54,4 +54,4 @@ class Model:
         hs_values = [hi[1] for hi in hs_items]
 
         (hs_grid) = np.meshgrid(*tuple(hs_values))
-        return np.vectorize(lambda *a: self.fit_with_cache(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }, log))(*tuple(hs_grid))
+        return np.vectorize(lambda *a: self.fit_with_cache(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }))(*tuple(hs_grid))

@@ -1,3 +1,4 @@
+import numpy as np
 # This file contains all functions related to solving the normal
 # function analytically using linear algebra
 

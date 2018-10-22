@@ -1,5 +1,7 @@
 # This file contains everything related to computing (stochastic)
 # gradient descent.
+import numpy as np
+
 
 def compute_gradient(y, tx, w):
     """Compute the gradient."""

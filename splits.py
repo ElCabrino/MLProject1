@@ -1,5 +1,6 @@
 # This file contains all functions that allow to split a model
 # into training and testing subsets.
+import numpy as np
 
 def build_k_indices(y, k_fold, seed):
     """build k indices for k-fold."""

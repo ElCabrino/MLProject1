@@ -1,9 +1,10 @@
 # This file contains all models defined using the Model class.
-
+import numpy as np
 from features import *
 from helpers import *
 from costs import *
 from model import *
+from algebra import *
 
 class LeastSquare_MSE_Model(Model):
 
