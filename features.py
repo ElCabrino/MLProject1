@@ -1,4 +1,13 @@
+# This file contains all functions related to transforming and cleaning
+# the features
+
 import numpy as np
+
+def build_poly(x, degree):
+    """polynomial basis functions for input data x, for j=0 up to j=degree."""
+    # this function should return the matrix formed
+    # by applying the polynomial basis to the input data
+    return np.array([np.concatenate([[1.0]] + [[xi ** d for d in range(1, degree+1)] for xi in row]) for row in x])
 
 def standardize(x):
     """Standardize the original data set."""
@@ -45,7 +54,6 @@ def remove_outliers(data):
     clamp(data[:, 29], 500)
 
     return data
-
 
 def clean_data(x):
 

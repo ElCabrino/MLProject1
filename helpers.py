@@ -2,7 +2,10 @@
 """some helper functions for project 1."""
 import csv
 import numpy as np
-
+import matplotlib.pyplot as plt
+import datetime
+from helpers import *
+from costs import *
 
 def load_csv_data(data_path, sub_sample=False):
     """Loads data and returns y (class labels), tX (features) and ids (event ids)"""
@@ -22,7 +25,6 @@ def load_csv_data(data_path, sub_sample=False):
         ids = ids[::50]
 
     return yb, input_data, ids
-
 
 def predict_labels(weights, data):
     """Generates class predictions given weights, and a test data matrix"""
@@ -46,3 +48,12 @@ def create_csv_submission(ids, y_pred, name):
         writer.writeheader()
         for r1, r2 in zip(ids, y_pred):
             writer.writerow({'Id':int(r1),'Prediction':int(r2)})
+
+
+# --
+# -- Custom Functions
+# --
+
+def dictionarify(w):
+
+    return { f'w{i[0]}': w for i, w in np.ndenumerate(w) }
