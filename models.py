@@ -97,6 +97,7 @@ class Lasso_SGD_MSE_Degree_Model(Model):
 
         n_iters = 1000
         batch_size = 1
+        gamma = 10**-8
         
         degree = int(h['degree'])
         lambda_ = float(h['lambda'])
@@ -112,3 +113,27 @@ class Lasso_SGD_MSE_Degree_Model(Model):
             "mse": mse
         }, w
         
+class First_Order_Logistic_Regression_Model(Model):
+
+    def prepare(self, x, y):
+
+        return clean_data(self.raw_x), y
+
+    def fit(self, x, y, h={}):
+
+        n_iters = 1000
+        batch_size = 1
+        
+        degree = int(h['degree'])
+        gamma = float(h['gamma'])
+
+        tx = build_poly(x, degree)
+        
+        initial_w = np.zeros(tx.shape[1])
+
+        w = logistic_regression(y, tx, initial_w, batch_size, n_iters, gamma)
+        mse = compute_mse(y, tx, w)
+        
+        return {
+            "mse": mse
+        }, w
