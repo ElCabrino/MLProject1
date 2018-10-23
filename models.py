@@ -1,5 +1,6 @@
 # This file contains all models defined using the Model class.
 import numpy as np
+from math import isnan, inf
 from features import *
 from helpers import *
 from costs import *
@@ -69,10 +70,9 @@ class StochasticGradientDescent_MSE_Degree_Model(Model):
         return clean_data(self.raw_x), y
 
     def fit(self, x, y, h={}):
-
-        n_iters = 1000
-        batch_size = 1
         
+        batch_size = int(h['batch_size'])
+        n_iters = int(h['n_iters'])
         degree = int(h['degree'])
         gamma = float(h['gamma'])
 
@@ -82,6 +82,9 @@ class StochasticGradientDescent_MSE_Degree_Model(Model):
 
         w = stochastic_gradient_descent(y, tx, initial_w, batch_size, n_iters, gamma)
         mse = compute_mse(y, tx, w)
+
+        if isnan(mse):
+            mse = inf
         
         return {
             "mse": mse
@@ -94,13 +97,12 @@ class Lasso_SGD_MSE_Degree_Model(Model):
         return clean_data(self.raw_x), y
 
     def fit(self, x, y, h={}):
-
-        n_iters = 1000
-        batch_size = 1
-        gamma = 10**-8
         
+        batch_size = int(h['batch_size'])
+        n_iters = int(h['n_iters'])
         degree = int(h['degree'])
         lambda_ = float(h['lambda'])
+        gamma = float(h['gamma'])
 
         tx = build_poly(x, degree) 
 
@@ -108,6 +110,9 @@ class Lasso_SGD_MSE_Degree_Model(Model):
 
         w = lasso_stochastic_gradient_descent(y, tx, initial_w, batch_size, n_iters, gamma, lambda_)
         mse = compute_mse(y, tx, w)
+
+        if isnan(mse):
+            mse = inf
         
         return {
             "mse": mse
@@ -120,10 +125,9 @@ class First_Order_Logistic_Regression_Model(Model):
         return clean_data(self.raw_x), y
 
     def fit(self, x, y, h={}):
-
-        n_iters = 1000
-        batch_size = 1
         
+        batch_size = int(h['batch_size'])
+        n_iters = int(h['n_iters'])
         degree = int(h['degree'])
         gamma = float(h['gamma'])
 
@@ -133,6 +137,9 @@ class First_Order_Logistic_Regression_Model(Model):
 
         w = logistic_regression(y, tx, initial_w, batch_size, n_iters, gamma)
         mse = compute_mse(y, tx, w)
+
+        if isnan(mse):
+            mse = inf
         
         return {
             "mse": mse
