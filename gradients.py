@@ -72,7 +72,6 @@ def logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma):
     for n_iter in range(max_iters):
         for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
             grad, _ = compute_logistic_gradient(y_batch, tx_batch, w)
-            grad += [lambd if w_i != 0 else 0 for w_i in w]
             w = w - gamma * grad
     return w
 
@@ -81,8 +80,9 @@ def lasso_stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, g
     """Stochastic gradient descent."""
     w = initial_w
     for n_iter in range(max_iters):
-        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
+        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1): 
             grad, _ = compute_stoch_gradient(y_batch, tx_batch, w)
+            #Lasso regularization
             grad += [lambd if w_i != 0 else 0 for w_i in w]
             w = w - gamma * grad
     return w
@@ -90,16 +90,11 @@ def lasso_stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, g
 #Stochastic Gradient Descent
 def stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, gamma):
     """Stochastic gradient descent."""
-    # Define parameters to store w and loss
     w = initial_w
-
     for n_iter in range(max_iters):
         for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
-            # compute a stochastic gradient and loss
             grad, _ = compute_stoch_gradient(y_batch, tx_batch, w)
-            # update w through the stochastic gradient update
             w = w - gamma * grad
-
     return w
 
 #Stochastic Gradient Descent
