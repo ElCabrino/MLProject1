@@ -59,6 +59,21 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
         if start_index != end_index:
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
 
+#Stochastic Gradient Descent with Lasso regularization
+def lasso_stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, gamma, lambd):
+    """Stochastic gradient descent."""
+    # Define parameters to store w and loss
+    w = initial_w
+
+    for n_iter in range(max_iters):
+        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
+            # compute a stochastic gradient and loss
+            grad, _ = compute_stoch_gradient(y_batch, tx_batch, w)
+            grad += [lambd if w_i != 0 else 0 for w_i in w]
+            # update w through the stochastic gradient update
+            w = w - gamma * grad
+
+    return w
 
 #Stochastic Gradient Descent
 def stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, gamma):

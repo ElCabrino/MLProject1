@@ -79,7 +79,33 @@ class StochasticGradientDescent_MSE_Degree_Model(Model):
         tx = build_poly(x, degree)
         
         initial_w = np.zeros(tx.shape[1])
+
         w = stochastic_gradient_descent(y, tx, initial_w, batch_size, n_iters, gamma)
+        mse = compute_mse(y, tx, w)
+        
+        return {
+            "mse": mse
+        }, w
+
+class Lasso_SGD_MSE_Degree_Model(Model):
+
+    def prepare(self, x, y):
+
+        return clean_data(self.raw_x), y
+
+    def fit(self, x, y, h={}):
+
+        n_iters = 1000
+        batch_size = 1
+        
+        degree = int(h['degree'])
+        lambda_ = float(h['lambda'])
+
+        tx = build_poly(x, degree) 
+
+        initial_w = np.zeros(tx.shape[1])
+
+        w = lasso_stochastic_gradient_descent(y, tx, initial_w, batch_size, n_iters, gamma, lambda_)
         mse = compute_mse(y, tx, w)
         
         return {
