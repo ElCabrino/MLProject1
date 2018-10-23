@@ -5,6 +5,7 @@ from helpers import *
 from costs import *
 from model import *
 from algebra import *
+from gradients import *
 
 class LeastSquare_MSE_Model(Model):
 
@@ -60,3 +61,28 @@ class RidgeRegression_MSE_Degree_Model(Model):
         return {
             "mse": mse
         }, w
+
+class StochasticGradientDescent_MSE_Degree_Model(Model):
+
+    def prepare(self, x, y):
+
+        return clean_data(self.raw_x), y
+
+    def fit(self, x, y, h={}):
+
+        n_iters = 1000
+        batch_size = 1
+        
+        degree = int(h['degree'])
+        gamma = float(h['gamma'])
+
+        tx = build_poly(x, degree)
+        
+        initial_w = np.zeros(tx.shape[1])
+        w = stochastic_gradient_descent(y, tx, initial_w, batch_size, n_iters, gamma)
+        mse = compute_mse(y, tx, w)
+        
+        return {
+            "mse": mse
+        }, w
+        
