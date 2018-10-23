@@ -1,6 +1,5 @@
 # This file contains all functions related to transforming and cleaning
 # the features
-
 import numpy as np
 
 def build_poly(x, degree):

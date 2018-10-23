@@ -53,5 +53,5 @@ class Model:
         hs_keys = [hi[0] for hi in hs_items]
         hs_values = [hi[1] for hi in hs_items]
 
-        (hs_grid) = np.meshgrid(*tuple(hs_values))
+        (hs_grid) = np.meshgrid(*tuple(hs_values), indexing='ij')
         return np.vectorize(lambda *a: self.fit_with_cache(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }))(*tuple(hs_grid))
