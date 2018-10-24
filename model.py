@@ -1,6 +1,6 @@
 from cache import Cache
 import numpy as np
-
+import multiprocessing
 
 class Model:
 
@@ -54,4 +54,16 @@ class Model:
         hs_values = [hi[1] for hi in hs_items]
 
         (hs_grid) = np.meshgrid(*tuple(hs_values), indexing='ij')
-        return np.vectorize(lambda *a: self.fit_with_cache(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }))(*tuple(hs_grid))
+
+        hs_pairs = [{}]
+        for key in hs:
+            temp = []
+            for value in hs[key]:
+                for pair in hs_pairs:
+                    t = dict(pair)
+                    t[key] = value
+                    temp.append(t)
+            hs_pairs = temp
+
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        return pool.starmap(self.fit_with_cache, [(x, y, h) for h in hs_pairs])

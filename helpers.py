@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import datetime
 from helpers import *
 from costs import *
+from features import *
 
 def load_csv_data(data_path, sub_sample=False):
     """Loads data and returns y (class labels), tX (features) and ids (event ids)"""
@@ -55,5 +56,10 @@ def create_csv_submission(ids, y_pred, name):
 # --
 
 def dictionarify(w):
-
     return { f'w{i[0]}': w for i, w in np.ndenumerate(w) }
+
+
+def find_arg_min(res, value):
+    val = np.vectorize(lambda x: x[value])(res)
+    index = int(np.where(val == val.min())[0][0])
+    return res[index]
