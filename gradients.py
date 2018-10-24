@@ -41,6 +41,21 @@ def compute_logistic_gradient(y, tx, w):
     "Compute gradient for the logistic regression algorithm"
     return tx.T@(logistic_function(tx@w)-y)
 
+#compute S matrix for second order logistic regression
+def compute_S(tx, w):
+    n = tx.shape[0]
+    S = np.zeros([n, n])
+    for i in range(n):
+        sigma_xW = logistic_function(tx[n].T@w)
+        S[i, i] = sigma_xW*(1-sigma_xW)
+    return S
+
+#compute H matrix for second order logistic regression
+def compute_H(tx, w):
+    S = compute_S(tx, w)
+    return tx.T@S@S
+
+
 def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
     """
     Generate a minibatch iterator for a dataset.
@@ -65,6 +80,17 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
         end_index = min((batch_num + 1) * batch_size, data_size)
         if start_index != end_index:
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
+
+def newton_method(y, tx, initial_w, batch_size, max_iters, gamma):
+    "Second order Logistic Regression with SGD"
+    w = initial_w
+    for n_iter in range(max_iters):
+        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
+            H = compute_H(tx, w)
+            H_inv = np.linalg.inv(H)
+            grad = compute_logistic_gradient(y_batch, tx_batch, w)
+            w = w - gamma * H_inv * grad
+    return w
 
 def logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma):
     "First order Logistic Regression with SGD"
