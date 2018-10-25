@@ -5,6 +5,7 @@ from helpers import *
 from features import *
 from splits import *
 from collections import defaultdict
+from gradients import *
 
 
 class Model:
@@ -136,10 +137,11 @@ class CrossValidationModel(Model):
             errors_tr = self.model.test(x_tr, y_tr, w[k], h)
             errors_te = self.model.test(x_te, y_te, w[k], h)
 
-            errors = {**{ k + '_tr': v for k, v in errors_tr.items() },
-                      **{ k + '_te': v for k, v in errors_te.items() }}
+            errors = {**{ 'avg_' + k + '_tr': v for k, v in errors_tr.items() },
+                      **{ 'avg_' + k + '_te': v for k, v in errors_te.items() }}
 
             for key, error in errors.items():
+
                 averages[key] += error / k_fold
 
         return averages
@@ -147,3 +149,46 @@ class CrossValidationModel(Model):
     def predict(self, h, x_tr, y_tr, name):
 
         return self.model.predict(h, x_tr, y_tr, name)
+
+
+class StochasticGradientDescent(Model):
+
+    def __init__(self, model):
+
+        self.model = model
+
+    def prepare(self, x, y, h):
+
+        return self.model.prepare(x, y, h)
+
+    def fit(self, x, y, h):
+
+        seed = int(h['seed'])
+        batch_size = int(h['batch_size'])
+        gamma = float(h['gamma'])
+        num_batches = int(h['num_batches'])
+        max_iters = int(h['max_iters'])
+
+        # Initialize with [0, 0, ..., 0]
+        w = np.zeros(x.shape[1])
+
+        for n_iter in range(max_iters):
+
+            for y_batch, x_batch in batch_iter(y, x, batch_size=batch_size, num_batches=num_batches):
+
+                # Compute gradient using the inner model
+                grad = self.model.compute_gradient(y_batch, x_batch, w, h)
+
+                # Update w through the stochastic gradient update
+                w = w - gamma * grad
+
+        return w
+
+    def test(self, x, y, w, h):
+
+        gradient = self.model.compute_gradient(y, x, w, h)
+
+        return {
+            '|g|': np.linalg.norm(gradient, 1),
+            **self.model.test(x, y, w, h)
+        }
