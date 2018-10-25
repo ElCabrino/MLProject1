@@ -2,6 +2,9 @@ from cache import Cache
 import numpy as np
 import matplotlib.pyplot as plt
 from helpers import *
+from features import *
+from splits import *
+from collections import defaultdict
 
 
 class Model:
@@ -14,14 +17,11 @@ class Model:
 
         raise NotImplementedError
 
-    def get_weights(self, x, y, h):
+    def test(self, x, y, w, h):
 
-        x, y = self.prepare(x, y)
-        _, w = self.fit(x, y, h)
+        raise NotImplementedError
 
-        return w
-
-    def fit_with_cache(self, x, y, h):
+    def evaluate_step(self, x, y, h):
 
         stored_res = self.cache.get(h)
 
@@ -29,7 +29,8 @@ class Model:
             return dict(list(zip(stored_res.dtype.names, stored_res)))
 
         x, y = self.prepare(x, y, h)
-        res, _ = self.fit(x, y, h)
+        w = self.fit(x, y, h)
+        res = self.test(x, y, w, h)
         self.cache.put(h, res)
 
         return { **h, **res }
@@ -47,9 +48,20 @@ class Model:
 
         (hs_grid) = np.meshgrid(*tuple(hs_values), indexing='ij')
 
-        results = np.vectorize(lambda *a: self.fit_with_cache(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }))(*tuple(hs_grid))
+        results = np.vectorize(lambda *a: self.evaluate_step(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }))(*tuple(hs_grid))
 
         return results
+
+    def predict(self, h, x_tr, y_tr, name):
+
+        x_tr, y_tr = self.prepare(x_tr, y_tr, h)
+        w = self.fit(x_tr, y_tr, h)
+
+        _, x_pred, ids = load_csv_data("data/test.csv", sub_sample=False)
+        x_pred, _ = self.prepare(x_pred, None, h)
+        y_pred = predict_labels(w, x_pred)
+
+        create_csv_submission(ids, y_pred, name)
 
 def plot_heatmap(res, hs, value, x, y):
     val = np.vectorize(lambda x: x[value])(res)
@@ -71,45 +83,9 @@ def find_arg_min(res, value):
 
     return res[tuple([i[0] for i in index])]
 
-def predict(model, h, x_tr, y_tr, name):
+class CrossValidationModel(Model):
 
-    x_tr, y_tr = model.prepare(x_tr, y_tr, h)
-    _, weights = model.fit(x_tr, y_tr, h)
-
-    _, x_pred, ids = load_csv_data("data/test.csv", sub_sample=False)
-    x_pred, _ = model.prepare(x_pred, None, h)
-    y_pred = predict_labels(weights, x_pred)
-
-    create_csv_submission(ids, y_pred, name)
-
-
-class ValidatingModel:
-
-    def __init__(model):
-
-        self.model = model
-
-    def prepare(self, x, y, h):
-
-        return self.model.prepare(x, y, h)
-
-    def fit(self, x, y, h):
-
-        x, y = self.model.prepare(x, y, h)
-
-        test_pr = float(h['test_p'])
-
-        x_tr, x_te, y_tr, y_te = split(...)
-
-        w = self.model.fit(x_tr, y_tr, h)
-
-        res = self.model.test(x_tr, y_tr)
-        res = self.model.test(x_te, y_te)
-
-
-class CrossValidationModel:
-
-    def __init__(model):
+    def __init__(self, model):
 
         self.model = model
 
@@ -128,21 +104,46 @@ class CrossValidationModel:
         # We will store average over the k_fold in this
         averages = defaultdict(float)
 
+        ws = []
+
         for k in range(0, k_fold):
 
-            # get split data
+            # Get split data
             x_tr, x_te, y_tr, y_te = cross_data(y, x, k_indices, k)
 
-            # ridge regression:
+            # Perform fit on partitioned data
             w = self.model.fit(x_tr, y_tr, h)
 
-            errors_tr = self.model.test(x_tr, y_tr, h)
-            errors_te = self.model.test(x_te, y_tr, h)
+            # Append everything so we can pass it to test
+            ws.append(w)
 
-            errors = { k + '_tr': v for k, v in errors_tr }
-                   + { k + '_te': v for k, v in errors_te }
+        return ws
+
+    def test(self, x, y, w, h):
+
+        k_fold = int(h['k_fold'])
+        seed = int(h['seed'])
+
+        # Split data in k fold
+        k_indices = build_k_indices(y, k_fold, seed)
+
+        averages = defaultdict(int)
+
+        for k in range(0, k_fold):
+
+            x_tr, x_te, y_tr, y_te = cross_data(y, x, k_indices, k)
+
+            errors_tr = self.model.test(x_tr, y_tr, w[k], h)
+            errors_te = self.model.test(x_te, y_te, w[k], h)
+
+            errors = {**{ k + '_tr': v for k, v in errors_tr.items() },
+                      **{ k + '_te': v for k, v in errors_te.items() }}
 
             for key, error in errors.items():
                 averages[key] += error / k_fold
 
         return averages
+
+    def predict(self, h, x_tr, y_tr, name):
+
+        return self.model.predict(h, x_tr, y_tr, name)
