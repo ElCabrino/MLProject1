@@ -1,15 +1,12 @@
 from cache import Cache
 import numpy as np
+import matplotlib.pyplot as plt
+from helpers import *
 
 
 class Model:
 
-    def __init__(self, x, y):
-
-        self.raw_x = x
-        self.raw_y = y
-
-    def prepare(self, x, y):
+    def prepare(self, x, y, h):
 
         raise NotImplementedError
 
@@ -17,9 +14,9 @@ class Model:
 
         raise NotImplementedError
 
-    def get_weights(self, h):
+    def get_weights(self, x, y, h):
 
-        x, y = self.prepare(self.raw_x, self.raw_y)
+        x, y = self.prepare(x, y)
         _, w = self.fit(x, y, h)
 
         return w
@@ -29,24 +26,19 @@ class Model:
         stored_res = self.cache.get(h)
 
         if stored_res != None:
-            # if log:
-                # print(f'Parameters {h} already computed, skippin')
             return dict(list(zip(stored_res.dtype.names, stored_res)))
 
+        x, y = self.prepare(x, y, h)
         res, _ = self.fit(x, y, h)
         self.cache.put(h, res)
 
-        # if log:
-        #     print(f'Finished computing {h}.')
-
         return { **h, **res }
 
-    def evaluate(self, hs, filename):
+    def evaluate(self, x, y, hs, filename):
         """Applies grid search algorithm to the cartesian product of the parameters
         passed in argument. If a 'file' is given, it will load from this file
         and write into it."""
 
-        x, y = self.prepare(self.raw_x, self.raw_y)
         self.cache = Cache(filename)
 
         hs_items = sorted(hs.items())
@@ -54,4 +46,103 @@ class Model:
         hs_values = [hi[1] for hi in hs_items]
 
         (hs_grid) = np.meshgrid(*tuple(hs_values), indexing='ij')
-        return np.vectorize(lambda *a: self.fit_with_cache(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }))(*tuple(hs_grid))
+
+        results = np.vectorize(lambda *a: self.fit_with_cache(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }))(*tuple(hs_grid))
+
+        return results
+
+def plot_heatmap(res, hs, value, x, y):
+    val = np.vectorize(lambda x: x[value])(res)
+
+    index = 0
+
+    for key in sorted(hs.keys()):
+        if key == x or key == y:
+            index = index + 1
+        else:
+            val = np.apply_along_axis(np.mean, index, val)
+
+    ax = plt.imshow(1 / val, cmap='hot', interpolation='none')
+    plt.show()
+
+def find_arg_min(res, value):
+    val = np.vectorize(lambda x: x[value])(res)
+    index = np.where(val == val.min())
+
+    return res[tuple([i[0] for i in index])]
+
+def predict(model, h, x_tr, y_tr, name):
+
+    x_tr, y_tr = model.prepare(x_tr, y_tr, h)
+    _, weights = model.fit(x_tr, y_tr, h)
+
+    _, x_pred, ids = load_csv_data("data/test.csv", sub_sample=False)
+    x_pred, _ = model.prepare(x_pred, None, h)
+    y_pred = predict_labels(weights, x_pred)
+
+    create_csv_submission(ids, y_pred, name)
+
+
+class ValidatingModel:
+
+    def __init__(model):
+
+        self.model = model
+
+    def prepare(self, x, y, h):
+
+        return self.model.prepare(x, y, h)
+
+    def fit(self, x, y, h):
+
+        x, y = self.model.prepare(x, y, h)
+
+        test_pr = float(h['test_p'])
+
+        x_tr, x_te, y_tr, y_te = split(...)
+
+        w = self.model.fit(x_tr, y_tr, h)
+
+        res = self.model.test(x_tr, y_tr)
+        res = self.model.test(x_te, y_te)
+
+
+class CrossValidationModel:
+
+    def __init__(model):
+
+        self.model = model
+
+    def prepare(self, x, y, h):
+
+        return self.model.prepare(x, y, h)
+
+    def fit(self, x, y, h):
+
+        k_fold = int(h['k_fold'])
+        seed = int(h['seed'])
+
+        # Split data in k fold
+        k_indices = build_k_indices(y, k_fold, seed)
+
+        # We will store average over the k_fold in this
+        averages = defaultdict(float)
+
+        for k in range(0, k_fold):
+
+            # get split data
+            x_tr, x_te, y_tr, y_te = cross_data(y, x, k_indices, k)
+
+            # ridge regression:
+            w = self.model.fit(x_tr, y_tr, h)
+
+            errors_tr = self.model.test(x_tr, y_tr, h)
+            errors_te = self.model.test(x_te, y_tr, h)
+
+            errors = { k + '_tr': v for k, v in errors_tr }
+                   + { k + '_te': v for k, v in errors_te }
+
+            for key, error in errors.items():
+                averages[key] += error / k_fold
+
+        return averages
