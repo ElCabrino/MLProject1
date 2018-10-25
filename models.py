@@ -144,3 +144,30 @@ class First_Order_Logistic_Regression_Model(Model):
         return {
             "mse": mse
         }, w
+
+class Second_Order_Logistic_Regression_Model(Model):
+
+    def prepare(self, x, y):
+
+        return clean_data(self.raw_x), y
+
+    def fit(self, x, y, h={}):
+        
+        batch_size = int(h['batch_size'])
+        n_iters = int(h['n_iters'])
+        degree = int(h['degree'])
+        gamma = float(h['gamma'])
+
+        tx = build_poly(x, degree)
+        
+        initial_w = np.zeros(tx.shape[1])
+
+        w = newton_method(y, tx, initial_w, batch_size, n_iters, gamma)
+        mse = compute_mse(y, tx, w)
+
+        if isnan(mse):
+            mse = inf
+        
+        return {
+            "mse": mse
+        }, w
