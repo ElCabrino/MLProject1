@@ -48,18 +48,9 @@ class Model:
 
         (hs_grid) = np.meshgrid(*tuple(hs_values), indexing='ij')
 
-        hs_pairs = [{}]
-        for key in hs:
-            temp = []
-            for value in hs[key]:
-                for pair in hs_pairs:
-                    t = dict(pair)
-                    t[key] = value
-                    temp.append(t)
-            hs_pairs = temp
+        results = np.vectorize(lambda *a: self.evaluate_step(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }))(*tuple(hs_grid))
 
-        pool = multiprocessing.Pool(multiprocessing.cpu_count())
-        return pool.starmap(self.fit_with_cache, [(x, y, h) for h in hs_pairs])
+        return results
 
     def predict(self, h, x_tr, y_tr, name):
 
