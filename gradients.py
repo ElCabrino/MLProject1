@@ -85,10 +85,11 @@ def newton_method(y, tx, initial_w, batch_size, max_iters, gamma):
     "Second order Logistic Regression with SGD"
     w = initial_w
     for n_iter in range(max_iters):
-        H = compute_H(tx, w)
-        H_inv = np.linalg.inv(H)
-        grad = compute_logistic_gradient(y, tx, w)
-        w = w - gamma * H_inv@grad
+        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
+            H = compute_H(tx_batch, w)
+            H_inv = np.linalg.inv(H)
+            grad = compute_logistic_gradient(y_batch, tx_batch, w)
+            w = w - gamma * H_inv@grad
     return w
 
 def logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma):
