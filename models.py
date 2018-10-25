@@ -16,8 +16,8 @@ class LeastSquare_MSE_Model(Model):
 
     def fit(self, x, y, h={}):
 
-        w = least_squares(self.y, self.x)
-        mse = compute_mse(self.y, self.x, w)
+        w = least_squares(y, x)
+        mse = compute_mse(y, x, w)
 
         return {
             "mse": mse
