@@ -34,12 +34,10 @@ def compute_stoch_gradient(y, tx, w):
     grad = -tx.T.dot(err) / len(err)
     return grad, err
 
-def logistic_function(x):
-	return np.exp(x)/(1+np.exp(x))
-
 def compute_logistic_gradient(y, tx, w):
     """Compute gradient for the logistic regression algorithm"""
-    return tx.T@(logistic_function(tx@w)-y)
+    grad = tx.T @ (logistic_function(tx @ w) - y)
+    return grad
 
 def compute_S(tx, w):
     """"Compute S matrix for second order logistic regression"""
@@ -52,7 +50,7 @@ def compute_S(tx, w):
 
 def compute_H(tx, w):
     """Compute H matrix for second order logistic regression"""
-    S = compute_S(tx, w)   
+    S = compute_S(tx, w)
     return tx.T@S@tx
 
 
@@ -89,7 +87,7 @@ def newton_method(y, tx, initial_w, batch_size, max_iters, gamma):
             H = compute_H(tx_batch, w)
             H_inv = np.linalg.inv(H)
             grad = compute_logistic_gradient(y_batch, tx_batch, w)
-            w = w - gamma * H_inv@grad
+            w = w - gamma * H_inv @ grad
     return w
 
 def reg_logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma, lambda_):
@@ -98,7 +96,7 @@ def reg_logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma, lamb
     for n_iter in range(max_iters):
         for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
             grad = compute_logistic_gradient(y_batch, tx_batch, w)
-            grad += lambda_*w
+            grad += lambda_ * w
             w = w - gamma * grad
     return w
 
