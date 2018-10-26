@@ -6,7 +6,6 @@ from helpers import *
 from features import *
 from splits import *
 from collections import defaultdict
-from gradients import *
 
 class Model:
 
@@ -49,9 +48,20 @@ class Model:
 
         (hs_grid) = np.meshgrid(*tuple(hs_values), indexing='ij')
 
-        results = np.vectorize(lambda *a: self.evaluate_step(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }))(*tuple(hs_grid))
+        # hs_pairs = [{}]
+        # for key in hs:
+        #     temp = []
+        #     for value in hs[key]:
+        #         for pair in hs_pairs:
+        #             t = dict(pair)
+        #             t[key] = value
+        #             temp.append(t)
+        #     hs_pairs = temp
 
-        return results
+
+
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        return pool.starmap(self.evaluate_step, [(x, y, h) for h in hs_pairs])
 
     def predict(self, h, x_tr, y_tr, name):
 
@@ -81,8 +91,9 @@ def plot_heatmap(res, hs, value, x, y):
 def find_arg_min(res, value):
     val = np.vectorize(lambda x: x[value])(res)
     index = np.where(val == val.min())
+    print(index)
 
-    return res[tuple([i[0] for i in index])]
+    return res[index[0][0]]
 
 class CrossValidationModel(Model):
 
@@ -137,11 +148,10 @@ class CrossValidationModel(Model):
             errors_tr = self.model.test(x_tr, y_tr, w[k], h)
             errors_te = self.model.test(x_te, y_te, w[k], h)
 
-            errors = {**{ 'avg_' + k + '_tr': v for k, v in errors_tr.items() },
-                      **{ 'avg_' + k + '_te': v for k, v in errors_te.items() }}
+            errors = {**{ k + '_tr': v for k, v in errors_tr.items() },
+                      **{ k + '_te': v for k, v in errors_te.items() }}
 
             for key, error in errors.items():
-
                 averages[key] += error / k_fold
 
         return averages
@@ -149,46 +159,3 @@ class CrossValidationModel(Model):
     def predict(self, h, x_tr, y_tr, name):
 
         return self.model.predict(h, x_tr, y_tr, name)
-
-
-class StochasticGradientDescent(Model):
-
-    def __init__(self, model):
-
-        self.model = model
-
-    def prepare(self, x, y, h):
-
-        return self.model.prepare(x, y, h)
-
-    def fit(self, x, y, h):
-
-        seed = int(h['seed'])
-        batch_size = int(h['batch_size'])
-        gamma = float(h['gamma'])
-        num_batches = int(h['num_batches'])
-        max_iters = int(h['max_iters'])
-
-        # Initialize with [0, 0, ..., 0]
-        w = np.zeros(x.shape[1])
-
-        for n_iter in range(max_iters):
-
-            for y_batch, x_batch in batch_iter(y, x, batch_size=batch_size, num_batches=num_batches):
-
-                # Compute gradient using the inner model
-                grad = self.model.compute_gradient(y_batch, x_batch, w, h)
-
-                # Update w through the stochastic gradient update
-                w = w - gamma * grad
-
-        return w
-
-    def test(self, x, y, w, h):
-
-        gradient = self.model.compute_gradient(y, x, w, h)
-
-        return {
-            '|g|': np.linalg.norm(gradient, 1),
-            **self.model.test(x, y, w, h)
-        }
