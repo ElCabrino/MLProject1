@@ -48,9 +48,18 @@ class Model:
 
         (hs_grid) = np.meshgrid(*tuple(hs_values), indexing='ij')
 
-        results = np.vectorize(lambda *a: self.evaluate_step(x, y, { hs_keys[i]: a[i] for i in range(len(a)) }))(*tuple(hs_grid))
+        hs_pairs = [{}]
+        for key in hs:
+            temp = []
+            for value in hs[key]:
+                for pair in hs_pairs:
+                    t = dict(pair)
+                    t[key] = value
+                    temp.append(t)
+            hs_pairs = temp
 
-        return results
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        return pool.starmap(self.evaluate_step, [(x, y, h) for h in hs_pairs])
 
     def predict(self, h, x_tr, y_tr, name):
 
@@ -62,7 +71,7 @@ class Model:
         y_pred = predict_labels(w, x_pred)
 
         create_csv_submission(ids, y_pred, name)
-
+ 
 def plot_heatmap(res, hs, value, x, y):
     val = np.vectorize(lambda x: x[value])(res)
 
@@ -80,8 +89,9 @@ def plot_heatmap(res, hs, value, x, y):
 def find_arg_min(res, value):
     val = np.vectorize(lambda x: x[value])(res)
     index = np.where(val == val.min())
+    print(index)
 
-    return res[tuple([i[0] for i in index])]
+    return res[index[0][0]]
 
 class CrossValidationModel(Model):
 
