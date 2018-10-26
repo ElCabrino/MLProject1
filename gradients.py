@@ -92,6 +92,16 @@ def newton_method(y, tx, initial_w, batch_size, max_iters, gamma):
             w = w - gamma * H_inv@grad
     return w
 
+def reg_logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma, lambda_):
+    "First order Logistic Regression with SGD"
+    w = initial_w
+    for n_iter in range(max_iters):
+        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
+            grad = compute_logistic_gradient(y_batch, tx_batch, w)
+            grad += lambda_*w
+            w = w - gamma * grad
+    return w
+
 def logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma):
     "First order Logistic Regression with SGD"
     w = initial_w
