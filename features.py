@@ -12,10 +12,35 @@ MIN_MAX_VALUES = {
 }
 
 def build_poly(x, degree):
-    """polynomial basis functions for input data x, for j=0 up to j=degree."""
-    # this function should return the matrix formed
-    # by applying the polynomial basis to the input data
-    return np.array([np.concatenate([[1.0]] + [[xi ** d for d in range(1, degree+1)] for xi in row]) for row in x])
+
+    if degree < 0:
+        return build_poly_cross(x, -degree)
+
+    return build_poly_single(x, degree)
+
+def build_poly_single(x, degree):
+
+    x_constant = np.ones(shape=(x.shape[0], 1))
+
+    if degree == 0:
+        return x_constant
+
+    if degree == 1:
+        return np.concatenate([x_constant, x], axis=1)
+
+    xi = np.repeat(x, degree, axis=1)
+    di = np.tile(np.arange(1, degree + 1), x.shape[1])
+
+    x_expanded = np.apply_along_axis(lambda row: np.vectorize(lambda x, d: x ** d)(row, di), 1, xi)
+
+    return np.concatenate([x_constant, x_expanded], axis=1)
+
+def build_poly_cross(x):
+
+    cross_x = np.array([[row[i] * row[j] for i in range(len(row)) for j in range(len(row)) if j != i and j > i] for row in x])
+    exp_x = build_poly_single(x, 2)
+
+    return np.concatenate([exp_x, cross_x], axis=1)
 
 def standardize(x):
     """Standardize the original data set."""
@@ -57,3 +82,16 @@ def remove_nan_features(x):
 def remove_nan_samples(x, y):
     mask = np.any(np.isnan(x), axis=1)
     return x[~mask], y[~mask]
+
+def decompose_categorical(x):
+    return np.array([np.vectorize(lambda xi: 1 if xi == i else 0)(x) for i in np.unique(x)]).T
+
+def separate_features(x, indexes):
+    return x[:, indexes], np.delete(x, indexes, axis=1)
+
+def normalize(x):
+    return (x - x.min()) / (x.max() - x.min())
+
+def normalize_all(x):
+    x = np.apply_along_axis(lambda xi: normalize(xi), 0, x)
+    return x
