@@ -212,17 +212,18 @@ def cross_validate(fit, validate):
 
             # Extract weights from results
             w = result_tr['w']
-            result_tr = remove_ws(result_tr)
+            # result_tr = remove_ws(result_tr)
 
             # Validate on test set
-            result_te = validate(y_te, x_te, w)
+            validate_tr = validate(y_tr, x_tr, w, h)
+            validate_te = validate(y_te, x_te, w, h)
 
             weight_averages = weight_averages + (w / k_fold)
 
-            for key, value in result_tr.items():
+            for key, value in validate_tr.items():
                 averages['avg_' + key + '_tr'] += value / k_fold
 
-            for key, value in result_te.items():
+            for key, value in validate_te.items():
                 averages['avg_' + key + '_te'] += value / k_fold
 
         return { **h, **averages, 'w': weight_averages }
@@ -255,8 +256,8 @@ def fit_with_cache(fit, cache):
 
         # If there is a stored result, we simply take it.
         if stored_res != None:
-            res['w'] = decode_w(res['w'])
-            return res
+            stored_res['w'] = decode_w(stored_res['w'])
+            return stored_res
 
         # Otherwise, we recompute
         result = fit(y, x, h)
