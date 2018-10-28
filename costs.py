@@ -27,14 +27,14 @@ def predict_values(x, w):
 
     return y_pred
 
-def split_predict(predicts, xs, ws, ids):
+def split_predict(predict, xs, ws, ids):
 
     n = len(ws)
 
-    ys = [predicts[i](xs[i], ws[i]) for i in range(n)]
+    ys = [predict(xs[i], ws[i]) for i in range(n)]
 
-    ys_with_ids = np.concatenate([np.concatenate([ys[i], ids[i]], axis=1) for i in range(n)], axis=0)
-    ys_with_ids = np.sort(ys_with_ids, axis=0)
+    ys_with_ids = np.concatenate([[ids[i], ys[i]] for i in range(n)], axis=1).T
+    ys_with_ids = ys_with_ids[ys_with_ids[:, 0].argsort()]
 
     return ys_with_ids[:, 1]
 
