@@ -52,7 +52,7 @@ def create_csv_submission(ids, y_pred, name):
 
 
 # --
-# -- Custom Functions
+# -- Custom Functions   0.21174
 # --
 
 def dictionarify(w):
@@ -90,5 +90,15 @@ def remove_ws(d):
 
     for key in keys_to_remove:
         del d[key]
+
+    return d
+
+def remove_h(d, h):
+
+    d = { ** d}
+
+    for key, _ in h.items():
+        if d[key] != None:
+            del d[key]
 
     return d
