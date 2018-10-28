@@ -13,11 +13,22 @@ def compute_mae(y, tx, w):
 def compute_rmse(y, tx, w):
     return np.sqrt(2*compute_mse(y,tx,w))
 
-def compute_error_count(y, x, w):
-    y_pred = np.where(logistic_function(x @ w) >= 0.5, 1, 0)
-    incorrect = np.where(y_pred != y, 1, 0)
+def predict_logistic(x, w, submission=False):
+    y_pred = logistic_function(x @ w)
+    negative_replacement = -1 if submission else 0
+    y_pred[np.where(y_pred <= 0.5)] = negative_replacement
+    y_pred[np.where(y_pred > 0.5)] = 1
+    return y_pred
 
-    return np.sum(incorrect)
+def compute_error_count(predict):
+
+    def inner_function(y, x, w):
+
+        y_pred = predict(x, w)
+        incorrect = np.where(y_pred != y, 1, 0)
+        return np.sum(incorrect) / y.shape[0]
+
+    return inner_function
 
 def compute_logistic_error(y, x, w):
     y_pred = logistic_function(x @ w)
