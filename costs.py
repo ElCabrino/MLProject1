@@ -25,9 +25,6 @@ def compute_error_count(predict):
     def inner_function(y, x, w):
 
         y_pred = predict(x, w)
-
-        print(f'prediction: {y_pred}')
-
         incorrect = np.where(y_pred != y, 1, 0)
         return np.sum(incorrect) / y.shape[0]
 
