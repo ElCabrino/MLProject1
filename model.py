@@ -89,6 +89,16 @@ def descent_with_cache(descent, round_size, cache, multiple=True, log=True):
 
     return inner_function
 
+def descent_with_loss(gradient, loss):
+
+    def inner_function(y, x, h, initial_w):
+
+        result = gradient(y, x, h, initial_w)
+        err = loss(y, x, result['w'], h)
+
+        return { **result, **err }
+
+    return inner_function
 
 def stochastic_gradient_descent_e(gradient):
 
@@ -100,7 +110,7 @@ def stochastic_gradient_descent_e(gradient):
         max_iters = int(h['max_iters'])
         gamma = float(h['gamma'])
 
-        if not (type(initial_w) is np.ndarray) and initial_w is None:
+        if (not (type(initial_w) is np.ndarray)) and initial_w is None:
             initial_w = np.zeros(x.shape[1])
 
         w = initial_w
