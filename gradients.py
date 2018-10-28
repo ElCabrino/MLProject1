@@ -37,7 +37,7 @@ def compute_stoch_gradient(y, tx, w):
 def compute_logistic_gradient(y, tx, w):
     """Compute gradient for the logistic regression algorithm"""
     grad = tx.T @ (logistic_function(tx @ w) - y)
-    return grad
+    return grad / y.shape[0]
 
 def compute_S(tx, w):
     """"Compute S matrix for second order logistic regression"""
@@ -117,7 +117,7 @@ def lasso_stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, g
         for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1): 
             grad, _ = compute_stoch_gradient(y_batch, tx_batch, w)
             #Lasso regularization
-            grad += [lambd if w_i != 0 else 0 for w_i in w]
+            grad += [lambd * np.sign(w_i) if w_i != 0 else 0 for w_i in w]
             w = w - gamma * grad
     return w
 
