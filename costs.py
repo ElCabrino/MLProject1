@@ -21,7 +21,7 @@ def compute_error_count(y, x, w):
 
 def compute_logistic_error(y, x, w):
     y_pred = logistic_function(x @ w)
-    return - (y @ np.log(y_pred) + (1 - y) @ np.log(1 - y_pred))
+    return - (y @ np.log(y_pred) + (1 - y) @ np.log(1 - y_pred)) / y.shape[0]
 
 def sigmoid(x):
 

@@ -35,7 +35,7 @@ def build_poly_single(x, degree):
 
     return np.concatenate([x_constant, x_expanded], axis=1)
 
-def build_poly_cross(x):
+def build_poly_cross(x, degree):
 
     cross_x = np.array([[row[i] * row[j] for i in range(len(row)) for j in range(len(row)) if j != i and j > i] for row in x])
     exp_x = build_poly_single(x, 2)

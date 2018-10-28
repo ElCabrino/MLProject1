@@ -63,3 +63,32 @@ def encode_w(w):
 
 def decode_w(w):
     return np.array([float(x) for x in str(w)[2:-1].split('|')])
+
+def encode_ws(d):
+
+    for key, value in d.items():
+        if re.match('$w', key):
+            d[key] = decode_w(d[value])
+
+    return d
+
+def decode_ws(d):
+
+    for key, value in d.items():
+        if re.match('$w', key):
+            d[key] = encode_w(d[value])
+
+    return d
+
+def remove_ws(d):
+
+    keys_to_remove = []
+
+    for key, _ in d.items():
+        if re.match('$w', key):
+            keys_to_remove.append(key)
+
+    for key in keys_to_remove:
+        del d[key]
+
+    return d

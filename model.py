@@ -13,8 +13,6 @@ def stochastic_gradient_descent_e(gradient, loss, log=True):
 
     def inner_function(y, x, h, cache=None):
 
-        # print(y)
-
         seed = int(h['seed'])
         batch_size = int(h['batch_size'])
         num_batches = int(h['num_batches'])
