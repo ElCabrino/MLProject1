@@ -10,7 +10,7 @@ from gradients import *
 
 
 
-def descent_with_cache(descent, loss, round_size, cache, log=True):
+def descent_with_cache(descent, round_size, cache, multiple=True, log=True):
 
     def find_last_result(cache, round_size, h):
 
@@ -40,12 +40,18 @@ def descent_with_cache(descent, loss, round_size, cache, log=True):
             raise InvalidArgumentException('Please make sure max_iter is a product of round_size')
 
         last_result = find_last_result(cache, round_size, h)
-        initial_w = np.zeros(x.shape[1])
+
         start_n_iter = 0
+        initial_w = None
 
         if last_result != None:
-            initial_w = decode_w(last_result['w'])
+
             start_n_iter = last_result['max_iters']
+
+            if multiple:
+                initial_w = decode_ws(last_result)
+            else:
+                initial_w = decode_w(last_result['w'])
 
         if start_n_iter == max_iters:
             return last_result
@@ -62,18 +68,24 @@ def descent_with_cache(descent, loss, round_size, cache, log=True):
             modified_h['seed'] = seed_iter
 
             result = descent(y, x, modified_h, initial_w)
-            initial_w = result['w']
+
+            if multiple:
+                initial_w = extract_ws(result)
+            else:
+                initial_w = result['w']
 
             modified_h['max_iters'] = n_iter + round_size
             modified_h['seed'] = seed
 
-            err = loss(y, x, result['w'], h)
+            if multiple:
+                result = encode_ws(result)
 
             result['w'] = encode_w(result['w'])
-            cache.put(modified_h, { **err , **result })
+
+            cache.put(modified_h, result)
 
             if log:
-                print(f'iteration {n_iter + round_size} - err = {err}')
+                print(f'iteration {n_iter + round_size} - {remove_ws(result)}')
 
     return inner_function
 
@@ -88,7 +100,11 @@ def stochastic_gradient_descent_e(gradient):
         max_iters = int(h['max_iters'])
         gamma = float(h['gamma'])
 
+        if not (type(initial_w) is np.ndarray) and initial_w is None:
+            initial_w = np.zeros(x.shape[1])
+
         w = initial_w
+
         seed_iter = seed
 
         err = {}
@@ -104,6 +120,59 @@ def stochastic_gradient_descent_e(gradient):
         return {
             **h,
             'w': w
+        }
+
+    return inner_function
+
+
+def cross_validate_descent(descent, validate):
+
+    def inner_function(y, x, h, initial_w):
+
+        k_fold = int(h['k_fold'])
+        seed_cv = int(h['seed_cv'])
+
+        # Split data in k fold
+        k_indices = build_k_indices(y, k_fold, seed_cv)
+
+        # We will store average over the k_fold in this
+        averages = defaultdict(float)
+
+        weights = []
+
+        if initial_w == None:
+            initial_w = [ None for k in range(0, k_fold) ]
+
+        for k in range(0, k_fold):
+
+            # Get split data
+            x_tr, x_te, y_tr, y_te = cross_data(y, x, k_indices, k)
+
+            # Perform descent on partitioned data
+            result_tr = descent(y_tr, x_tr, h, initial_w[k])
+
+            # Extract weights from results
+            w = result_tr['w']
+
+            # Validate on test set
+            validate_tr = validate(y_tr, x_tr, w, h)
+            validate_te = validate(y_te, x_te, w, h)
+
+            weights.append(w)
+
+            for key, value in remove_h(validate_tr, h).items():
+                averages['avg_' + key + '_tr'] += value / k_fold
+
+            for key, value in remove_h(validate_te, h).items():
+                averages['avg_' + key + '_te'] += value / k_fold
+
+        weights_dict = { f'w_{k}': weights[k] for k in range(0, k_fold) }
+
+        return {
+            **h,
+            **averages,
+            'w': np.mean(weights, axis=0),
+            **weights_dict
         }
 
     return inner_function
