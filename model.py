@@ -9,9 +9,80 @@ from collections import defaultdict
 from gradients import *
 
 
-def stochastic_gradient_descent_e(gradient, loss, log=True):
 
-    def inner_function(y, x, h, cache=None):
+def descent_with_cache(descent, loss, round_size, cache, log=True):
+
+    def find_last_result(cache, round_size, h):
+
+        max_iters = int(h['max_iters'])
+        h = { **h }
+
+        while max_iters > 0:
+            h['max_iters'] = max_iters
+            result = cache.get(h)
+            if result != None:
+                print(f'FOUND RESULT IN CACHE {result}')
+                return result
+            else:
+                max_iters = max_iters - round_size
+
+        print('NOTHING IN CACHE')
+        return None
+
+    def inner_function(y, x, h):
+
+        max_iters = int(h['max_iters'])
+        seed = int(h['seed'])
+        batch_size = int(h['batch_size'])
+        num_batches = int(h['num_batches'])
+        max_iters = int(h['max_iters'])
+        gamma = float(h['gamma'])
+
+        if max_iters % round_size != 0:
+            raise InvalidArgumentException('Please make sure max_iter is a product of round_size')
+
+        last_result = find_last_result(cache, round_size, h)
+        initial_w = np.zeros(x.shape[1])
+        start_n_iter = 0
+
+        if last_result != None:
+            initial_w = decode_w(last_result['w'])
+            start_n_iter = last_result['max_iters']
+
+        if start_n_iter == max_iters:
+            return last_result
+
+        number_of_rounds = (max_iters - start_n_iter) // round_size
+
+        for round in range(0, number_of_rounds):
+
+            n_iter = start_n_iter + round * round_size
+            seed_iter = seed + n_iter
+
+            modified_h = { **h }
+            modified_h['max_iters'] = round_size
+            modified_h['seed'] = seed_iter
+
+            result = descent(y, x, h, initial_w)
+            initial_w = result['w']
+
+            h['max_iters'] = n_iter + round_size
+            h['seed'] = seed
+
+            err = loss(y, x, result['w'], h)
+
+            result['w'] = encode_w(result['w'])
+            cache.put(h, { **err , **result })
+
+            if log:
+                print(f'iteration {n_iter + round_size} - err = {err}')
+
+    return inner_function
+
+
+def stochastic_gradient_descent_e(gradient):
+
+    def inner_function(y, x, h, initial_w):
 
         seed = int(h['seed'])
         batch_size = int(h['batch_size'])
