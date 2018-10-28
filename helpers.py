@@ -7,6 +7,7 @@ import datetime
 from helpers import *
 from costs import *
 from features import *
+import re
 
 def load_csv_data(data_path, sub_sample):
     """Loads data and returns y (class labels), tX (features) and ids (event ids)"""
@@ -66,39 +67,45 @@ def decode_w(w):
 
 def encode_ws(d):
 
-    for key, value in d.items():
-        if re.match('$w', key):
-            d[key] = decode_w(d[value])
+    d = { **d }
+
+    for key, value in sorted(d.items()):
+        if re.match('w_\d+', key):
+            d[key] = encode_w(value)
 
     return d
 
 def decode_ws(d):
 
-    for key, value in d.items():
-        if re.match('$w', key):
-            d[key] = encode_w(d[value])
+    return [decode_w(w) for w in extract_ws(d) ]
 
-    return d
+def extract_ws(d):
+
+    array = []
+
+    for key, value in sorted(d.items()):
+        if re.match('w_\d+', key):
+            array.append(value)
+
+    return array
+
 
 def remove_ws(d):
 
-    keys_to_remove = []
+    d_mut = { ** d }
 
     for key, _ in d.items():
-        if re.match('$w', key):
-            keys_to_remove.append(key)
+        if re.match('^w', key):
+            del d_mut[key]
 
-    for key in keys_to_remove:
-        del d[key]
-
-    return d
+    return d_mut
 
 def remove_h(d, h):
 
-    d = { ** d}
+    d_mut = { ** d}
 
     for key, _ in h.items():
-        if d[key] != None:
-            del d[key]
+        if key in d:
+            del d_mut[key]
 
-    return d
+    return d_mut
