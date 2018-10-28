@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
+
 def compute_mse(y, tx, w):
     e = y - tx@w
     return 1/2*np.mean(e**2)
@@ -13,15 +14,18 @@ def compute_rmse(y, tx, w):
     return np.sqrt(2*compute_mse(y,tx,w))
 
 def compute_error_count(y, x, w):
-    return np.sum(np.vectorize(lambda xw, y: 0 if xw * y > 0 else 1)(x @ w, y))
+    y_pred = np.where(logistic_function(x @ w) >= 0.5, 1, 0)
+    incorrect = np.where(y_pred != y, 1, 0)
+
+    return np.sum(incorrect)
 
 def compute_logistic_error(y, x, w):
     y_pred = logistic_function(x @ w)
-    return - (y @ np.log(y_pred) + (1 - y) @ np.log(1 - y_pred))
+    return - (y @ np.log(y_pred) + (1 - y) @ np.log(1 - y_pred)) / y.shape[0]
 
 def sigmoid(x):
 
-    threshold = 0.00001
+    threshold = 1e-10
 
     if x > 0:
         res = 1 / (np.exp(-x) + 1)

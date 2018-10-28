@@ -57,3 +57,38 @@ def create_csv_submission(ids, y_pred, name):
 
 def dictionarify(w):
     return { f'w{i[0]}': w for i, w in np.ndenumerate(w) }
+
+def encode_w(w):
+    return '|'.join(map(lambda wi: str(wi), w))
+
+def decode_w(w):
+    return np.array([float(x) for x in str(w)[2:-1].split('|')])
+
+def encode_ws(d):
+
+    for key, value in d.items():
+        if re.match('$w', key):
+            d[key] = decode_w(d[value])
+
+    return d
+
+def decode_ws(d):
+
+    for key, value in d.items():
+        if re.match('$w', key):
+            d[key] = encode_w(d[value])
+
+    return d
+
+def remove_ws(d):
+
+    keys_to_remove = []
+
+    for key, _ in d.items():
+        if re.match('$w', key):
+            keys_to_remove.append(key)
+
+    for key in keys_to_remove:
+        del d[key]
+
+    return d

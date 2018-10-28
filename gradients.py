@@ -2,6 +2,7 @@
 # gradient descent.
 import numpy as np
 from costs import *
+from splits import *
 
 
 def compute_gradient(y, tx, w):
@@ -36,8 +37,7 @@ def compute_stoch_gradient(y, tx, w):
 
 def compute_logistic_gradient(y, tx, w):
     """Compute gradient for the logistic regression algorithm"""
-    grad = tx.T @ (logistic_function(tx @ w) - y)
-    return grad
+    return tx.T @ (logistic_function(tx @ w) - y) / y.shape[0]
 
 def compute_S(tx, w):
     """"Compute S matrix for second order logistic regression"""
@@ -52,32 +52,6 @@ def compute_H(tx, w):
     """Compute H matrix for second order logistic regression"""
     S = compute_S(tx, w)
     return tx.T@S@tx
-
-
-def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
-    """
-    Generate a minibatch iterator for a dataset.
-    Takes as input two iterables (here the output desired values 'y' and the input data 'tx')
-    Outputs an iterator which gives mini-batches of `batch_size` matching elements from `y` and `tx`.
-    Data can be randomly shuffled to avoid ordering in the original data messing with the randomness of the minibatches.
-    Example of use :
-    for minibatch_y, minibatch_tx in batch_iter(y, tx, 32):
-        <DO-SOMETHING>
-    """
-    data_size = len(y)
-
-    if shuffle:
-        shuffle_indices = np.random.permutation(np.arange(data_size))
-        shuffled_y = y[shuffle_indices]
-        shuffled_tx = tx[shuffle_indices]
-    else:
-        shuffled_y = y
-        shuffled_tx = tx
-    for batch_num in range(num_batches):
-        start_index = batch_num * batch_size
-        end_index = min((batch_num + 1) * batch_size, data_size)
-        if start_index != end_index:
-            yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
 
 def newton_method(y, tx, initial_w, batch_size, max_iters, gamma):
     "Second order Logistic Regression with SGD"
@@ -100,11 +74,16 @@ def reg_logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma, lamb
             w = w - gamma * grad
     return w
 
-def logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma):
+def logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma, seed):
     "First order Logistic Regression with SGD"
+
     w = initial_w
+    seed_iter = seed
+
     for n_iter in range(max_iters):
-        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
+
+        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1, seed=seed_iter):
+
             grad = compute_logistic_gradient(y_batch, tx_batch, w)
             w = w - gamma * grad
     return w
