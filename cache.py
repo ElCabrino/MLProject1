@@ -1,6 +1,7 @@
 import os.path
 import csv
 import numpy as np
+from helpers import *
 
 
 class Cache:
@@ -35,9 +36,12 @@ class Cache:
         if res.shape[0] == 0:
             return None
         else:
+            res = dict(list(zip(res.dtype.names, *res)))
             return res
 
     def put(self, hyperparams, values):
+
+        values = remove_h(values, hyperparams)
 
         if self.contains(hyperparams):
             # For now, just avoid duplicates

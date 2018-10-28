@@ -9,9 +9,78 @@ from collections import defaultdict
 from gradients import *
 
 
-def stochastic_gradient_descent_e(gradient, loss, log=True):
 
-    def inner_function(y, x, h, cache=None):
+def descent_with_cache(descent, loss, round_size, cache, log=True):
+
+    def find_last_result(cache, round_size, h):
+
+        max_iters = int(h['max_iters'])
+        h = { **h }
+
+        while max_iters > 0:
+            h['max_iters'] = max_iters
+            result = cache.get(h)
+            if result != None:
+                return result
+            else:
+                max_iters = max_iters - round_size
+
+        return None
+
+    def inner_function(y, x, h):
+
+        max_iters = int(h['max_iters'])
+        seed = int(h['seed'])
+        batch_size = int(h['batch_size'])
+        num_batches = int(h['num_batches'])
+        max_iters = int(h['max_iters'])
+        gamma = float(h['gamma'])
+
+        if max_iters % round_size != 0:
+            raise InvalidArgumentException('Please make sure max_iter is a product of round_size')
+
+        last_result = find_last_result(cache, round_size, h)
+        initial_w = np.zeros(x.shape[1])
+        start_n_iter = 0
+
+        if last_result != None:
+            initial_w = decode_w(last_result['w'])
+            start_n_iter = last_result['max_iters']
+
+        if start_n_iter == max_iters:
+            return last_result
+
+        number_of_rounds = (max_iters - start_n_iter) // round_size
+
+        for round in range(0, number_of_rounds):
+
+            n_iter = start_n_iter + round * round_size
+            seed_iter = seed + n_iter
+
+            modified_h = { **h }
+            modified_h['max_iters'] = round_size
+            modified_h['seed'] = seed_iter
+
+            result = descent(y, x, modified_h, initial_w)
+            initial_w = result['w']
+
+            modified_h['max_iters'] = n_iter + round_size
+            modified_h['seed'] = seed
+
+            err = loss(y, x, result['w'], h)
+
+            result['w'] = encode_w(result['w'])
+            cache.put(modified_h, { **err , **result })
+
+            if log:
+                print(f'iteration {n_iter + round_size} - err = {err}')
+
+    return inner_function
+
+
+def stochastic_gradient_descent_e(gradient):
+
+    def inner_function(y, x, h, initial_w):
 
         seed = int(h['seed'])
         batch_size = int(h['batch_size'])
@@ -19,7 +88,7 @@ def stochastic_gradient_descent_e(gradient, loss, log=True):
         max_iters = int(h['max_iters'])
         gamma = float(h['gamma'])
 
-        w = np.zeros(x.shape[1])
+        w = initial_w
         seed_iter = seed
 
         err = {}
@@ -30,24 +99,10 @@ def stochastic_gradient_descent_e(gradient, loss, log=True):
 
                 # Compute gradient using the inner model
                 grad = gradient(y_batch, x_batch, w, h)
-
-                # grad = results['grad']
-                # err = results['err']
-
                 w = w - gamma * grad
-
-            if step % 50 == 0:
-
-                err = loss(y, x, w)
-
-                if log:
-                    print(f'iteration {step} - err = {err}')
-
-            seed_iter += 1
 
         return {
             **h,
-            **err,
             'w': w
         }
 
@@ -78,7 +133,7 @@ def cross_validate(fit, validate):
 
             # Extract weights from results
             w = result_tr['w']
-            del result_tr['w']
+            result_tr = remove_ws(result_tr)
 
             # Validate on test set
             result_te = validate(y_te, x_te, w)
@@ -121,7 +176,6 @@ def fit_with_cache(fit, cache):
 
         # If there is a stored result, we simply take it.
         if stored_res != None:
-            res = dict(list(zip(stored_res.dtype.names, *stored_res)))
             res['w'] = decode_w(res['w'])
             return res
 
@@ -137,15 +191,10 @@ def fit_with_cache(fit, cache):
 
     return fit_inner
 
-def evaluate(clean, fit, y, x, hs, cache):
+def evaluate(clean, fit, y, x, hs):
     """Applies grid search algorithm to the cartesian product of the parameters
     passed in argument. If a 'file' is given, it will load from this file
     and write into it."""
-
-    if cache != None:
-        cache = Cache(cache)
-    else:
-        cache = None
 
     hs_items = sorted(hs.items())
     hs_keys = [hi[0] for hi in hs_items]
@@ -158,7 +207,7 @@ def evaluate(clean, fit, y, x, hs, cache):
     # pool = multiprocessing.Pool(multiprocessing.cpu_count())
     # res = pool.starmap(self.execute, hs_params)
 
-    return [clean_and_fit(clean, fit_with_cache(fit, cache))(*params) for params in hs_params]
+    return [clean_and_fit(clean, fit)(*params) for params in hs_params]
 
 def plot_heatmap(res, hs, value, x, y):
 
