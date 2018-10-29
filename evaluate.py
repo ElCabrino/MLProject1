@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 
 from features import *
+from implementations import *
 
 
-def evaluate(clean, fit, y, x, hs):
+def evaluate(fit, y, x, hs):
     """Applies grid search algorithm to the cartesian product of the parameters
     passed in argument. If a 'file' is given, it will load from this file
     and write into it."""
@@ -16,7 +17,7 @@ def evaluate(clean, fit, y, x, hs):
     hs_params = np.vectorize(lambda *a: { hs_keys[i]: a[i] for i in range(len(a)) })(*tuple(hs_grid))
     hs_params = [(y, x, h) for h in hs_params.flat]
 
-    return [clean_and_fit(clean, fit)(*params) for params in hs_params]
+    return [fit(*params) for params in hs_params]
 
 
 def plot_heatmap(res, hs, value, x, y):

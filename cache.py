@@ -64,7 +64,7 @@ class Cache:
 #   evaluated.
 
 
-def descent_with_cache(descent, round_size, cache, multiple=True, log=True):
+def clean_and_descent_with_cache(clean, descent, round_size, cache, multiple=True, log=True):
 
     def find_last_result(cache, round_size, h):
 
@@ -106,6 +106,9 @@ def descent_with_cache(descent, round_size, cache, multiple=True, log=True):
         if start_n_iter == max_iters:
             return last_result
 
+        # At this point, we need to clean the data
+        y, x = clean(y, x, h)
+
         number_of_rounds = (max_iters - start_n_iter) // round_size
 
         for round in range(0, number_of_rounds):
@@ -140,7 +143,7 @@ def descent_with_cache(descent, round_size, cache, multiple=True, log=True):
     return inner_function
 
 
-def fit_with_cache(fit, cache):
+def clean_and_fit_with_cache(clean, fit, cache):
     """
     This function takes a fit function and looks in the cache to see if the
     parameters have already been evaluated. If so, it will return the values
@@ -160,6 +163,7 @@ def fit_with_cache(fit, cache):
             return stored_res
 
         # Otherwise, we recompute
+        y, x = clean(y, x, h)
         result = fit(y, x, h)
 
         result_to_cache = { **result }
