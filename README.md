@@ -14,15 +14,16 @@ Currently **31th** with **83.237%** of correct predictions.
 
 | File | Description |
 |:---:|---|
-| `algebra.py` | implements analytical regression models least squares and ridge regression |
 | `cache.py`  | implements a cache, used to store errors according to the parameters of a model |
 |  `costs.py` | implements different costs functions |
+| `evaluate.py` | implements functions to find the best parameters for a model |
 |  `features.py` | implements differents features manipulation (polynomial expansion, standardization...) |
 |  `gradients.py` | implements differents regression models based on the gradient descent |
 |  `helpers.py` | provided helpers file with added function to encode the model's weights |
-|  `model.py` | implements higher order functions to run model with vectors of parameters |
-|  `splits.py` | implements all function related to data spliting for cross validation and batch_iter |
-
+| `implementations.py` | implements required functions and some others functions to create analytical and descent models |
+| `predict.py` | implements functions to predict labels (0 or 1) with given weights|
+|  `run.py` | required script of our best submission |
+| `validate.py`| implements functions to use cross-validation over a model |
 
 ## Folders
  
