@@ -28,15 +28,6 @@ def load_csv_data(data_path, sub_sample):
 
     return yb, input_data, ids
 
-def predict_labels(weights, data):
-    """Generates class predictions given weights, and a test data matrix"""
-    y_pred = np.dot(data, weights)
-    y_pred[np.where(y_pred <= 0)] = -1
-    y_pred[np.where(y_pred > 0)] = 1
-
-    return y_pred
-
-
 def create_csv_submission(ids, y_pred, name):
     """
     Creates an output file in csv format for submission to kaggle
@@ -55,57 +46,3 @@ def create_csv_submission(ids, y_pred, name):
 # --
 # -- Custom Functions   0.21174
 # --
-
-def dictionarify(w):
-    return { f'w{i[0]}': w for i, w in np.ndenumerate(w) }
-
-def encode_w(w):
-    return '|'.join(map(lambda wi: str(wi), w))
-
-def decode_w(w):
-    return np.array([float(x) for x in str(w)[2:-1].split('|')])
-
-def encode_ws(d):
-
-    d = { **d }
-
-    for key, value in sorted(d.items()):
-        if re.match('w_\d+', key):
-            d[key] = encode_w(value)
-
-    return d
-
-def decode_ws(d):
-
-    return [decode_w(w) for w in extract_ws(d) ]
-
-def extract_ws(d):
-
-    array = []
-
-    for key, value in sorted(d.items()):
-        if re.match('w_\d+', key):
-            array.append(value)
-
-    return array
-
-
-def remove_ws(d):
-
-    d_mut = { ** d }
-
-    for key, _ in d.items():
-        if re.match('^w', key):
-            del d_mut[key]
-
-    return d_mut
-
-def remove_h(d, h):
-
-    d_mut = { ** d}
-
-    for key, _ in h.items():
-        if key in d:
-            del d_mut[key]
-
-    return d_mut

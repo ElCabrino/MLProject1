@@ -5,65 +5,6 @@ from costs import *
 from splits import *
 
 
-def compute_gradient(y, tx, w):
-    """Compute the gradient."""
-    err = y - tx.dot(w)
-    grad = -tx.T.dot(err) / len(err)
-    return grad, err
-
-def gradient_descent(y, tx, initial_w, max_iters, gamma):
-    """Gradient descent algorithm."""
-    # Define parameters to store w and loss
-    ws = [initial_w]
-    losses = []
-    w = initial_w
-    for n_iter in range(max_iters):
-        # compute loss, gradient
-        grad, err = compute_gradient(y, tx, w)
-        loss = calculate_mse(err)
-        # gradient w by descent update
-        w = w - gamma * grad
-        # store w and loss
-        ws.append(w)
-        losses.append(loss)
-
-    return losses, ws
-
-def compute_stoch_gradient(y, tx, w):
-    """Compute a stochastic gradient for batch data."""
-    err = y - tx.dot(w)
-    grad = -tx.T.dot(err) / len(err)
-    return grad, err
-
-def compute_logistic_gradient(y, tx, w):
-    """Compute gradient for the logistic regression algorithm"""
-    return tx.T @ (logistic_function(tx @ w) - y) / y.shape[0]
-
-def compute_S(tx, w):
-    """"Compute S matrix for second order logistic regression"""
-    n = tx.shape[0]
-    S = np.zeros([n, n])
-    for i in range(n):
-        sigma_xW = logistic_function(tx[i].T@w)
-        S[i, i] = sigma_xW*(1-sigma_xW)
-    return S
-
-def compute_H(tx, w):
-    """Compute H matrix for second order logistic regression"""
-    S = compute_S(tx, w)
-    return tx.T@S@tx
-
-def newton_method(y, tx, initial_w, batch_size, max_iters, gamma):
-    "Second order Logistic Regression with SGD"
-    w = initial_w
-    for n_iter in range(max_iters):
-        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
-            H = compute_H(tx_batch, w)
-            H_inv = np.linalg.inv(H)
-            grad = compute_logistic_gradient(y_batch, tx_batch, w)
-            w = w - gamma * H_inv @ grad
-    return w
-
 def reg_logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma, lambda_):
     "First order Logistic Regression with SGD"
     w = initial_w
@@ -86,6 +27,53 @@ def logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma, seed):
 
             grad = compute_logistic_gradient(y_batch, tx_batch, w)
             w = w - gamma * grad
+
+        if n_iter % 10000 == 0:
+            err = compute_logistic_error(y, tx, w)
+            print(f'iteration {n_iter} - err = {err}')
+
+
+        seed_iter += 1
+
+    return w
+
+def logistic_regression_bold(y, tx, initial_w, batch_size, max_iters, gamma, seed):
+    "First order Logistic Regression with SGD"
+    w = initial_w
+
+    previous_err = float('inf')
+    gamma_iter = gamma
+    seed_iter = seed
+    prev_w = w
+
+    delta = 1.1
+
+    for n_iter in range(max_iters):
+
+        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1, seed=seed_iter):
+
+            grad = compute_logistic_gradient(y_batch, tx_batch, w)
+
+            w = w - gamma_iter * grad
+
+        if n_iter % 10000 == 0:
+
+            err = compute_logistic_error(y, tx, w)
+
+            if err > previous_err:
+                w = prev_w
+                gamma_iter = gamma_iter / 2
+                previous_err = err
+            else:
+                gamma_iter = gamma_iter * delta
+                previous_err = err
+
+            prev_w = w
+
+            print(f'iteration {n_iter} - err = {err}, gamma = {gamma_iter}')
+
+        seed_iter = seed_iter + 1
+
     return w
 
 #Stochastic Gradient Descent with Lasso regularization
@@ -93,7 +81,7 @@ def lasso_stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, g
     """Stochastic gradient descent."""
     w = initial_w
     for n_iter in range(max_iters):
-        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1): 
+        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
             grad, _ = compute_stoch_gradient(y_batch, tx_batch, w)
             #Lasso regularization
             grad += [lambd if w_i != 0 else 0 for w_i in w]
