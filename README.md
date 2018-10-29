@@ -1,4 +1,4 @@
-# Higg Boson Machine Learning Project
+# Higgs Boson Machine Learning Project
 
 ## Participants
 
