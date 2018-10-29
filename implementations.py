@@ -42,11 +42,12 @@ def least_squares(y, tx):
     """calculate the least squares (analytical solution)."""
     a = tx.T.dot(tx)
     b = tx.T.dot(y)
-    return np.linalg.solve(a, b)
+    w = np.linalg.solve(a, b)
+    return w, compute_mse(y, tx, w)
 
 
 def ridge_regression(y, tx, lambda_):
-    """implement ridge regression (analytical solution)."""
+    """implement ridge regression (analytiwial solution)."""
 
     t = 2 * tx.shape[0] * lambda_ * np.identity(tx.shape[1])
 
@@ -92,7 +93,7 @@ def least_squares_gradient(y, x, w, h={}):
     """Compute the gradient."""
     err = y - x.dot(w)
     grad = -x.T.dot(err) / len(err)
-    return grad, err
+    return grad
 
 
 def logistic_gradient(y, x, w, h={}):
@@ -188,7 +189,7 @@ def gradient_descent(gradient):
     return inner_function
 
 
-def descent_with_loss(gradient, loss):
+def descent_with_loss(descent, loss):
     """
     Wrap around a gradient descent function and calculates the final
     loss according to the weights found and loss function provided.
@@ -198,7 +199,7 @@ def descent_with_loss(gradient, loss):
     """
 
     def inner_function(y, x, h, initial_w):
-        result = gradient(y, x, h, initial_w)
+        result = descent(y, x, h, initial_w)
         err = loss(y, x, result['w'], h)
 
         return {**result, **err}
