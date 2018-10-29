@@ -30,4 +30,10 @@ Currently **31th** with **83.237%** of correct predictions.
 - `cache`: contains cache results of models with different parameters when use the sub sample mode.
 - `submissions`: contains results of prediction we did on the test dataset.
 
+## Tutorial
+
+Take a look at the `Tutorial.ipynb` for a detailed step-by-step tutorial.
+
+
+
 
