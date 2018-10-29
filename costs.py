@@ -5,32 +5,31 @@ import numpy as np
 #   Loss functions
 #   --------------
 #   Below are all the different loss functions that we use in our models.
-#   Note that they return a dictionary, the reason for this is that we will use
-#   this dictionary in the higher-level wrapper functions like fit_with_cache,
-#   and we want to associate a name with the value returned.
+#   Note that they accept a dictionary of hyperparameters h. This is so
+#   that we have a consistent signature over all error functions.
 
-def compute_mse(y, tx, w):
+def compute_mse(y, tx, w, h={}):
     """compute the mean squared error for the given weights and data."""
     e = y - tx@w
-    return 1 / 2 * np.mean(e ** 2)
+    return {'mse': 1 / 2 * np.mean(e ** 2)}
 
 
-def compute_mae(y, tx, w):
+def compute_mae(y, tx, w, h={}):
     """compute the mean absolute error for the given weights and data."""
     e = y - tx@w
-    return np.mean(np.abs(e))
+    return {'mae': np.mean(np.abs(e))}
 
 
-def compute_rmse(y, tx, w):
+def compute_rmse(y, tx, w, h={}):
     """compute the mean squared error for the given weights and data."""
-    return np.sqrt(2 * compute_mse(y,tx,w))
+    return {'rmse': np.sqrt(2 * compute_mse(y,tx,w)['mse'])}
 
 
-def compute_logistic_error(y, x, w):
+def compute_logistic_error(y, x, w, h={}):
     """compute the logistic error for the given weights and data."""
 
     y_pred = logistic_function(x @ w)
-    return -(y @ np.log(y_pred) + (1 - y) @ np.log(1 - y_pred)) / y.shape[0]
+    return {'logistic_err': -(y @ np.log(y_pred) + (1 - y) @ np.log(1 - y_pred)) / y.shape[0]}
 
 def compute_error_count(predict):
     """
@@ -42,7 +41,7 @@ def compute_error_count(predict):
 
         y_pred = predict(x, w)
         incorrect = np.where(y_pred != y, 1, 0)
-        return np.sum(incorrect) / y.shape[0]
+        return {'n_err': np.sum(incorrect) / y.shape[0]}
 
     return inner_function
 
@@ -57,8 +56,8 @@ def compute_error_count(predict):
 def mse(y, x, w, h):
 
     return {
-        'mse' : compute_mse(y, x, w),
-        'n_err': compute_error_count(predict_values)(y, x, w)
+        **compute_mse(y, x, w),
+        **compute_error_count(predict_values)(y, x, w)
     }
 
 
@@ -70,10 +69,10 @@ def mse_and_ridge(y, x, w, h):
     ridge_norm = np.linalg.norm(w, 2) * lambda_
 
     return {
-        'mse': mse,
+        **mse,
         'ridge_norm': ridge_norm,
-        'total_loss': mse + ridge_norm,
-        'n_err': compute_error_count(predict_values)(y, x, w)
+        'total_loss': mse['mse'] + ridge_norm,
+        **compute_error_count(predict_values)(y, x, w)
     }
 
 
@@ -85,18 +84,18 @@ def mse_and_lasso(y, x, w, h):
     lasso_norm = np.linalg.norm(w, 1) * lambda_
 
     return {
-        'mse': mse,
+        **mse,
         'lasso_norm': lasso_norm,
-        'total_loss': mse + lasso_norm,
-        'n_err': compute_error_count(predict_values)(y, x, w)
+        'total_loss': mse['mse'] + lasso_norm,
+        **compute_error_count(predict_values)(y, x, w)
     }
 
 
 def logistic_error(y, x, w, h):
 
     return {
-        'logistic_err': compute_logistic_error(y, x, w),
-        'n_err': compute_error_count(predict_logistic)(y, x, w)
+        **compute_logistic_error(y, x, w),
+        **compute_error_count(predict_logistic)(y, x, w)
     }
 
 
@@ -109,10 +108,10 @@ def logistic_error_and_ridge(y, x, w, h):
     n_err = compute_error_count(predict_logistic)(y, x, w)
 
     return {
-        'logistic_err': logistic_err,
+        **logistic_err,
         'ridge_norm': ridge_norm,
-        'total_loss': logistic_err + ridge_norm,
-        'n_err': n_err
+        'total_loss': logistic_err['logistic_err'] + ridge_norm,
+        **n_err
     }
 
 
@@ -125,10 +124,10 @@ def logistic_error_and_lasso(y, x, w, h):
     n_err = compute_error_count(predict_logistic)(y, x, w)
 
     return {
-        'logistic_err': logistic_err,
+        **logistic_err,
         'lasso_norm': lasso_norm,
-        'total_loss': logistic_err + lasso_norm,
-        'n_err': n_err
+        'total_loss': logistic_err['logistic_err'] + lasso_norm,
+        **n_err
     }
 
 #   Prediction Functions
