@@ -3,7 +3,6 @@ from costs import *
 from features import *
 from helpers import *
 from evaluate import *
-from predict import *
 from validate import *
 from implementations import *
 

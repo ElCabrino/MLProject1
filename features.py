@@ -151,9 +151,6 @@ def map_logistic(clean):
     return inner_function
 
 
-
-
-
 #   Aggregated Cleaning Functions
 #   -----------------------------
 #
