@@ -185,7 +185,7 @@ def encode_w(w):
 
 
 def decode_w(w):
-    return np.array([float(x) for x in str(w)[2:-1].split('|')])
+    return np.array([float(x) for x in str(w).split('|')])
 
 
 def encode_ws(d):
