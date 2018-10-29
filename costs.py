@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
+from predict import *
+
 
 #   Loss functions
 #   --------------
@@ -12,30 +14,25 @@ import numpy as np
 def compute_mse(y, tx, w):
     """compute the mean squared error for the given weights and data."""
     e = y - tx@w
-    return { 'mse': 1 / 2 * np.mean(e ** 2) }
+    return 1 / 2 * np.mean(e ** 2)
 
 
 def compute_mae(y, tx, w):
     """compute the mean absolute error for the given weights and data."""
     e = y - tx@w
-    return { 'mae': np.mean(np.abs(e)) }
+    return np.mean(np.abs(e))
 
 
 def compute_rmse(y, tx, w):
     """compute the mean squared error for the given weights and data."""
-    return { 'rmse': np.sqrt(2 * compute_mse(y,tx,w)['mse']) }
+    return np.sqrt(2 * compute_mse(y,tx,w))
 
 
 def compute_logistic_error(y, x, w):
     """compute the logistic error for the given weights and data."""
 
     y_pred = logistic_function(x @ w)
-    logistic_err = -(y @ np.log(y_pred) + (1 - y) @ np.log(1 - y_pred)) / y.shape[0]
-
-    return {
-        'logistic_err': logistic_err
-    }
-
+    return -(y @ np.log(y_pred) + (1 - y) @ np.log(1 - y_pred)) / y.shape[0]
 
 def compute_error_count(predict):
     """
@@ -47,7 +44,7 @@ def compute_error_count(predict):
 
         y_pred = predict(x, w)
         incorrect = np.where(y_pred != y, 1, 0)
-        return { 'n_err': np.sum(incorrect) / y.shape[0] }
+        return np.sum(incorrect) / y.shape[0]
 
     return inner_function
 
@@ -81,6 +78,6 @@ def sigmoid(x):
 
 
 def logistic_function(x):
-    """Sigmoid function for a ndarray."""
+    """Sigmoid function for a numpy.ndarray."""
 
     return np.vectorize(sigmoid)(x)

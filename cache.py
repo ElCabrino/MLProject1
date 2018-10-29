@@ -17,9 +17,6 @@ class Cache:
     def generate_array(self):
         self.array = np.genfromtxt(self.filename, delimiter=',', names=True, case_sensitive=True, dtype=None)
 
-    def headers(self):
-        return self.hyperparams_names + self.values_names
-
     def contains(self, hyperparams):
 
         return self.get(hyperparams) is not None
@@ -57,6 +54,7 @@ class Cache:
 
         with open(self.filename, 'a') as fd:
             fd.write(row)
+
 
 #   Wrapper functions
 #   -----------------
@@ -174,12 +172,8 @@ def fit_with_cache(fit, cache):
     return fit_inner
 
 
-#   Helpers
-#   -------
-
-
-def dictionarify(w):
-    return {f'w{i[0]}': w for i, w in np.ndenumerate(w)}
+#   Other Helpers
+#   -------------
 
 
 def encode_w(w):

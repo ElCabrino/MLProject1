@@ -7,13 +7,20 @@ from costs import *
 #   -----------------------
 #
 #   Below are the specific functions required to be implemented as part of
-#   the assignment. Because of the nature of our code, they often ...
+#   the assignment. Note that the gradient descent functions are implemented
+#   using `gradient_descent` or `stochastic_gradient_descent` (that will loop
+#   over the data set and descent with the given gradient function) and
+#   `descent_with_loss` that wraps around a descent function and associate
+#   a final cost to it. This allows us to avoid code duplication, as we only
+#   need to define the gradient function once and we can use it with any descent
+#   algorithm.
+
 
 def least_squares_GD(y, tx, initial_w, max_iters, gamma):
     h = {'max_iters': max_iters, 'gamma': gamma}
 
     results = descent_with_loss(
-        gradient_descent_e(least_squares_gradient),
+        gradient_descent(least_squares_gradient),
         compute_mse
     )(y, tx, h, initial_w)
 
@@ -24,7 +31,7 @@ def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
     h = {'max_iters': max_iters, 'gamma': gamma, 'seed': 0, 'batch_size': 1}
 
     results = descent_with_loss(
-        stochastic_gradient_descent_e(least_squares_gradient),
+        stochastic_gradient_descent(least_squares_gradient),
         compute_mse
     )(y, tx, h, initial_w)
 
@@ -55,7 +62,7 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     h = {'max_iters': max_iters, 'gamma': gamma}
 
     results = descent_with_loss(
-        gradient_descent_e(logistic_gradient),
+        gradient_descent(logistic_gradient),
         compute_logistic_error
     )(y, tx, h, initial_w)
 
@@ -68,7 +75,7 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     h = {'max_iters': max_iters, 'gamma': gamma, 'lambda': lambda_ }
 
     results = descent_with_loss(
-        gradient_descent_e(logistic_gradient_ridge),
+        gradient_descent(logistic_gradient_ridge),
         compute_logistic_error
     )(y, tx, h, initial_w)
 
@@ -99,6 +106,7 @@ def logistic_gradient(y, x, w, h={}):
 #
 #   These are the same as above but with an additional regularization term.
 
+
 def least_squares_gradient_lasso(y, x, w, h={}):
     return least_squares_gradient(y, x, w) + float(h['lambda']) * np.sign(w)
 
@@ -122,7 +130,8 @@ def logistic_gradient_ridge(y, x, w, h):
 #   gradient-computing function to run a full gradient descent (stochastic
 #   or normal)
 
-def stochastic_gradient_descent_e(gradient):
+
+def stochastic_gradient_descent(gradient):
     def inner_function(y, x, h, initial_w):
 
         seed = int(h['seed'])
@@ -155,7 +164,7 @@ def stochastic_gradient_descent_e(gradient):
     return inner_function
 
 
-def gradient_descent_e(gradient):
+def gradient_descent(gradient):
 
     def inner_function(y, x, h, initial_w):
 
@@ -232,8 +241,26 @@ def descent_with_loss(gradient, loss):
 #     return w
 
 
-#   Helpers
-#   -------
+#   Analytical Functions Wrappers
+#   -----------------------------
+#
+#   In order to interact well with `evaluate`, we need our functions to return
+#   the weights in a dictionary. These functions are therefore just wrappers
+#   around `least_squares` and `ridge_regression` that will do just that.
+
+
+def least_squares_weights(y, x, h):
+
+    return {'w': least_squares(y, x)[0]}
+
+
+def ridge_regression_weights(y, x, h):
+
+    return {'w': ridge_regression(y, x, float(h['lambda']))[0]}
+
+
+#   Other Helpers
+#   -------------
 
 def batch_iter(y, tx, batch_size, num_batches=1, seed=0):
     """

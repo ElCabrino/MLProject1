@@ -2,9 +2,11 @@
 # the features
 import numpy as np
 
+
 #   This dictionary contains, for each feature, the hand-picked minimum and
 #   maximum values above / below which we decide that certain values are
 #   considered to be outliers.
+
 MIN_MAX_VALUES = {
     0:  (0,  500), 1 : (0,  220), 2: (0, 300),  3: (0, 320),
     5:  (0, 2300),                              8: (0, 100),  9: (0, 1000),
@@ -139,6 +141,26 @@ def separate_features(x, indices):
     return x[:, indices], np.delete(x, indices, axis=1)
 
 
+def map_logistic(clean):
+
+    def inner_function(y, x, h):
+        y, x = clean(y, x, h)
+        y = np.where(y == 1, 1, 0)
+        return y, x
+
+    return inner_function
+
+
+
+
+
+#   Aggregated Cleaning Functions
+#   -----------------------------
+#
+#   These functions aggregate all the previous functions into
+#   "one-time-cleaning" function that we can reuse across different
+#   models.
+
 
 def split_data(y, x, ids):
     """
@@ -166,12 +188,14 @@ def split_data(y, x, ids):
     return ys, xs, ids
 
 
-def clean_and_fit(clean, fit):
+def clean_standardize_expand(y, x, h):
 
-    def inner_function(y, x, h):
-        y, x = clean(y, x, h)
-        return fit(y, x, h)
+    degree = int(h['degree'])
 
-    return inner_function
+    x = remove_errors(x)
+    x = remove_outliers(x)
+    x = standardize_all(x)
+    x = remove_nan_features(x)
+    x = build_poly(x, degree)
 
-
+    return y, x
