@@ -15,7 +15,7 @@ def predict_logistic(x, w, submission=False):
 
 def predict_values(x, w):
     """Predict values with weights received from least square"""
-    y_pred = np.dot(x, w)
+    y_pred = x @ w
     y_pred[np.where(y_pred <= 0)] = -1
     y_pred[np.where(y_pred > 0)] = 1
 

@@ -53,9 +53,9 @@ res = [
             # and cross-validating 4 times with the mean-squared error.
             cross_validate(ridge_regression_weights, mse_and_ridge),
             caches[i]),
-        x_split[i],
-        y_split[i],
-        h_array[i]
+        y  = y_split[i],
+        x  = x_split[i],
+        hs = h_array[i]
     )[0] for i in range(5)
 ]
 
