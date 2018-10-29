@@ -105,6 +105,7 @@ def clean_and_descent_with_cache(clean, descent, round_size, cache, multiple=Tru
                 initial_w = decode_w(last_result['w'])
 
         if start_n_iter == max_iters:
+            last_result['w'] = decode_w(last_result['w'])
             return last_result
 
         # At this point, we need to clean the data
@@ -188,7 +189,7 @@ def encode_w(w):
 
 
 def decode_w(w):
-    return np.array([float(x) for x in str(w)[1:-1].split('|')])
+    return np.array([float(x) for x in str(w).split('|')])
 
 
 def encode_ws(d):

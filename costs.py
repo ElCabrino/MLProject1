@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from predict import *
-
 
 #   Loss functions
 #   --------------
@@ -67,7 +65,7 @@ def mse(y, x, w, h):
 def mse_and_ridge(y, x, w, h):
 
     lambda_ = float(h['lambda'])
-    
+
     mse = compute_mse(y, x, w)
     ridge_norm = np.linalg.norm(w, 2) * lambda_
 
@@ -132,6 +130,39 @@ def logistic_error_and_lasso(y, x, w, h):
         'total_loss': logistic_err + lasso_norm,
         'n_err': n_err
     }
+
+#   Prediction Functions
+#   --------------------
+#
+#   These functions are used to predict new values based on data and weights
+
+def predict_logistic(x, w, submission=True):
+    """Predict values with weights received from logistic regression"""
+    y_pred = logistic_function(x @ w)
+    negative_replacement = -1 if submission else 0
+    y_pred[np.where(y_pred <= 0.5)] = negative_replacement
+    y_pred[np.where(y_pred > 0.5)] = 1
+    return y_pred
+
+
+def predict_values(x, w):
+    """Predict values with weights received from least square"""
+    y_pred = np.dot(x, w)
+    y_pred[np.where(y_pred <= 0)] = -1
+    y_pred[np.where(y_pred > 0)] = 1
+
+    return y_pred
+
+def split_predict(predict, xs, ws, ids):
+
+    n = 5
+
+    ys = [predict(xs[i], ws[i]) for i in range(n)]
+
+    ys_with_ids = np.concatenate([[ids[i], ys[i]] for i in range(n)], axis=1).T
+    ys_with_ids = ys_with_ids[ys_with_ids[:, 0].argsort()]
+
+    return ys_with_ids[:, 1]
 
 #   Helpers
 #   -------

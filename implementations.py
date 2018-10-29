@@ -47,7 +47,7 @@ def least_squares(y, tx):
     return w, compute_mse(y, tx, w)
 
 def ridge_regression(y, tx, lambda_):
-    """implement ridge regression (analytiwial solution)."""
+    """implement ridge regression (analytical solution)."""
 
     t = 2 * tx.shape[0] * lambda_ * np.identity(tx.shape[1])
 
