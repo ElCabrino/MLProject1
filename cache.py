@@ -15,7 +15,7 @@ class Cache:
             self.array = None
 
     def generate_array(self):
-        self.array = np.genfromtxt(self.filename, delimiter=',', names=True, case_sensitive=True, dtype=None)
+        self.array = np.genfromtxt(self.filename, delimiter=',', names=True, case_sensitive=True, dtype=None, encoding=None)
 
     def contains(self, hyperparams):
 

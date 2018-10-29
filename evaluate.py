@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+import seaborn as sns
 
 from features import *
 from implementations import *
@@ -20,28 +20,30 @@ def evaluate(fit, y, x, hs):
     return [fit(*params) for params in hs_params]
 
 
-def plot_heatmap(res, hs, value, x, y):
+def plot_heatmap(res, value, x_axis, y_axis, max_value=float('inf')):
 
-    val = np.vectorize(lambda x: x[value])(res)
+    def find_value(res, x_key, x_value, y_key, y_value, value):
 
-    index = 0
+        for result in res:
+            # print(result)
+            if result[x_key] == x_value and result[y_key] == y_value:
+                return result[value]
 
-    for key in sorted(hs.keys()):
-        if key == x or key == y:
-            index = index + 1
-        else:
-            val = np.apply_along_axis(np.mean, index, val)
-            # if key in filter_values.keys():
-            #     find_match = lambda row: row[np.where(np.vectorize(lambda elem: elem[key] == filter_values[key])(row))[0]][0]
-            #     val = np.apply_along_axis(find_match, index, val)
-            # else:
+        return None
 
-    ax = plt.imshow(1 / val, cmap='hot', interpolation='none')
-    plt.show()
+    x_axis_values = np.unique(np.vectorize(lambda res: res[x_axis])(res))
+    y_axis_values = np.unique(np.vectorize(lambda res: res[y_axis])(res))
 
+    (grid) = np.meshgrid(x_axis_values, y_axis_values)
+
+    heatmap_params = np.vectorize(lambda *a: [res, x_axis, a[0], y_axis, a[1], value])(*tuple(grid))
+    heatmap = np.vectorize(lambda params: find_value(*params))(heatmap_params)
+    heatmap = np.where(heatmap > max_value, max_value, heatmap)
+
+    sns.heatmap(heatmap, cmap='hot_r', xticklabels=x_axis_values, yticklabels=y_axis_values)
 
 def find_arg_min(res, value):
     val = np.vectorize(lambda x: x[value])(res)
-    index = np.where(val == val.min())
+    index = np.where(val == val.min())[0][0]
     h = res[index]
     return h
