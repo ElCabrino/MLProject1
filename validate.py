@@ -2,7 +2,7 @@
 # into training and testing subsets.
 import numpy as np
 from collections import defaultdict
-
+from cache import *
 
 def cross_validate(fit, validate):
 

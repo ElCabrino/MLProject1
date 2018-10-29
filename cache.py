@@ -1,5 +1,6 @@
 import os.path
 from helpers import *
+import re
 
 
 class Cache:
@@ -104,6 +105,7 @@ def clean_and_descent_with_cache(clean, descent, round_size, cache, multiple=Tru
                 initial_w = decode_w(last_result['w'])
 
         if start_n_iter == max_iters:
+            last_result['w'] = decode_w(last_result['w'])
             return last_result
 
         # At this point, we need to clean the data
