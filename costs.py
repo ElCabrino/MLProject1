@@ -49,6 +49,90 @@ def compute_error_count(predict):
     return inner_function
 
 
+#   Aggregated loss functions
+#   -------------------------
+#
+#   In a lot of cases in our exploration, we wanted to be able to analyze more
+#   than one error at a time. In order to do this, we used these aggregated
+#   functions that call several loss functions in parallel
+
+def mse(y, x, w):
+
+    return {
+        'mse' : compute_mse(y, x, w),
+        'n_err': compute_error_count(predict_values)(y, x, w)
+    }
+
+
+def mse_and_ridge(y, x, w, h):
+
+    lambda_ = float(h['lambda'])
+
+    mse = compute_mse(y, x, w)
+    ridge_norm = np.linalg.norm(w, 2) * lambda_
+
+    return {
+        'mse': mse,
+        'ridge_norm': ridge_norm,
+        'total_loss': mse + ridge_norm,
+        'n_err': compute_error_count(predict_values)(y, x, w)
+    }
+
+
+def mse_and_lasso(y, x, w, h):
+
+    lambda_ = float(h['lambda'])
+
+    mse = compute_mse(y, x, w)
+    lasso_norm = np.linalg.norm(w, 1) * lambda_
+
+    return {
+        'mse': mse,
+        'lasso_norm': lasso_norm,
+        'total_loss': mse + lasso_norm,
+        'n_err': compute_error_count(predict_values)(y, x, w)
+    }
+
+
+def logistic_error(y, x, w, h):
+
+    return {
+        'logistic_err': compute_logistic_error(y, x, w),
+        'n_err': compute_error_count(predict_logistic)(y, x, w)
+    }
+
+
+def logistic_error_and_ridge(y, x, w, h):
+
+    lambda_ = h['lambda']
+
+    ridge_norm = np.linalg.norm(w, 2) * lambda_
+    logistic_err = compute_logistic_error(y, x, w)
+    n_err = compute_error_count(predict_logistic)(y, x, w)
+
+    return {
+        'logistic_err': logistic_err,
+        'ridge_norm': ridge_norm,
+        'total_loss': logistic_err + ridge_norm,
+        'n_err': n_err
+    }
+
+
+def logistic_error_and_lasso(y, x, w, h):
+
+    lambda_ = h['lambda']
+
+    lasso_norm = np.linalg.norm(w, 1) * lambda_
+    logistic_err = compute_logistic_error(y, x, w)
+    n_err = compute_error_count(predict_logistic)(y, x, w)
+
+    return {
+        'logistic_err': logistic_err,
+        'lasso_norm': lasso_norm,
+        'total_loss': logistic_err + lasso_norm,
+        'n_err': n_err
+    }
+
 #   Helpers
 #   -------
 
