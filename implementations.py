@@ -1,4 +1,6 @@
 import numpy as np
+import warnings
+warnings.filterwarnings('ignore')
 
 from costs import *
 
@@ -28,7 +30,7 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
 
 
 def least_squares_SGD(y, tx, initial_w, max_iters, gamma):
-    h = {'max_iters': max_iters, 'gamma': gamma, 'seed': 0, 'batch_size': 1}
+    h = {'max_iters': max_iters, 'gamma': gamma, 'seed': 0, 'batch_size': 1, 'num_batches': 1}
 
     results = descent_with_loss(
         stochastic_gradient_descent(least_squares_gradient),
@@ -44,7 +46,7 @@ def least_squares(y, tx):
     b = tx.T.dot(y)
     w = np.linalg.solve(a, b)
 
-    return w, compute_mse(y, tx, w)
+    return w, compute_mse(y, tx, w)['mse']
 
 def ridge_regression(y, tx, lambda_):
     """implement ridge regression (analytical solution)."""
@@ -53,8 +55,9 @@ def ridge_regression(y, tx, lambda_):
 
     a = tx.T.dot(tx) + t
     b = tx.T.dot(y)
+    w = np.linalg.solve(a, b)
 
-    return np.linalg.solve(a, b)
+    return w, compute_mse(y, tx, w)['mse']
 
 
 def logistic_regression(y, tx, initial_w, max_iters, gamma):
@@ -258,7 +261,7 @@ def least_squares_weights(y, x, h):
 
 def ridge_regression_weights(y, x, h):
 
-    return {'w': ridge_regression(y, x, float(h['lambda']))}
+    return {'w': ridge_regression(y, x, float(h['lambda']))[0]}
 
 
 #   Other Helpers
