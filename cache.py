@@ -1,5 +1,6 @@
 import os.path
 from helpers import *
+import re
 
 
 class Cache:
@@ -139,6 +140,8 @@ def clean_and_descent_with_cache(clean, descent, round_size, cache, multiple=Tru
 
             if log:
                 print(f'iteration {n_iter + round_size} - {remove_ws(result)}')
+
+        return result
 
     return inner_function
 
