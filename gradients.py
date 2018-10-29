@@ -84,7 +84,7 @@ def lasso_stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, g
         for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
             grad, _ = compute_stoch_gradient(y_batch, tx_batch, w)
             #Lasso regularization
-            grad += [lambd if w_i != 0 else 0 for w_i in w]
+            grad += [lambd * np.sign(w_i) if w_i != 0 else 0 for w_i in w]
             w = w - gamma * grad
     return w
 
