@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """some helper functions for project 1."""
+import csv
+
 from helpers import *
 from features import *
 

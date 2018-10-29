@@ -1,18 +1,14 @@
-from algebra import *
 from cache import *
 from costs import *
 from features import *
-from gradients import *
 from helpers import *
-from model import *
-from splits import *
+from evaluate import *
+from predict import *
+from validate import *
+from implementations import *
 
-import numpy as np
-import matplotlib.mlab as mlab
-import matplotlib.pyplot as plt
 import csv
-import warnings
-warnings.filterwarnings('ignore')
+import numpy as np
 
 SUB_SAMPLE = False
 CACHE_DIR = "test/cache/" if SUB_SAMPLE else "cache/"
@@ -21,10 +17,11 @@ SUBMISSIONS_DIR = "test/submissions/" if SUB_SAMPLE else "submissions/"
 y, x, ids = load_csv_data('data/train.csv', SUB_SAMPLE)
 
 
-#split the data according to the field "jet number"
+# Split the data according to the mass of the Higgs Boson candidate and the
+# field "jet number"
 y_split, x_split, _ = split_data(y, x, ids)
 
-#best parameters we found for each of the 5 splits
+# List of best parameters we found for each of the 5 splits
 h_array = [
     { 'degree': -2, 'lambda': 1e-8, 'k_fold': 4, 'seed': 0 }, #jet number = NaN
     { 'degree': 12, 'lambda': 1e-7, 'k_fold': 4, 'seed': 0 }, #jet number = 0
@@ -33,39 +30,46 @@ h_array = [
     { 'degree': 10, 'lambda': 1e-8, 'k_fold': 4, 'seed': 0 }  #jet number = 3
 ]
 
-#files where we stored the results for each splits
+# Files where we stored the results for each splits. This avoids re-computing
+# the whole pipeline every time. If you want to start from scratch,
 caches = [Cache(CACHE_DIR + f'clean_standardize_expand_cross_validate_ridge_regression_analytical_mse_split{i}') for i in range(5)]
 
-#compute the weights and losses for each of 5 models we use with cross validation and ridge regression
+# Compute the weights and losses for each of 5 models we use with cross validation and ridge regression
 res = [
-	#applies a grid search to the cartesian product of the parameters 'hs', here we only have 1 element in our grid
+    # Our 'evaluate' function runs a full pipeline (clean, fit, validate) on
+    # all the hyperparameters passed, and was therefore used for fine-tuning
+    # In this case, we only have one value for each parameter, so it will return
+    # the results for these parameters only.
     evaluate(
-		#clean is the function used for data preprocessing 
-        clean = clean_standardize_expand,
 		#fit is the function that tries to fit our data, we use analytical ridge regression and
 		#cross validation. If the results are already computed for a set of parameters, fit_with_cache
 		#will return the corresponding values by looking at the cache file
-        fit   = fit_with_cache(cross_validate(ridge_regression_analytical, ridge_mse), caches[i]), 
-        x     = x_split[i],
-        y     = y_split[i], 
-        hs    = h_array[i]
+        clean_and_fit_with_cache(
+            # We clean each dataset with our function that removes the errors,
+            # removes the outliers, standardizes the features and expand the
+            # polynomials.
+            clean_standardize_expand,
+            # We fit our models using Ridge Regression (calculated analytically)
+            # and cross-validating 4 times with the mean-squared error.
+            cross_validate(ridge_regression_weights, mse_and_ridge),
+            caches[i]),
+        x_split[i],
+        y_split[i],
+        h_array[i]
     )[0] for i in range(5)
 ]
 
-#gets the weights
+# Extract the weights from the result
 ws = [r['w'] for r in res]
 
-#loads test dataset
+# Load test data, split it using the same categories and clean those
+# categories with the same cleaning function as before.
 y_test, x_test, ids_test = load_csv_data('data/test.csv', SUB_SAMPLE)
-
-#split the data in the same way as the training set
 _, x_test_split, ids_test_split = split_data(y_test, x_test, ids_test)
-
-#preprocesses the test set the same way as the training set
 x_test_split_prep = [clean_standardize_expand(None, x_test_split[i], h_array[i])[1] for i in range(5)]
 
-#computes our predictions
+# Calculates predictions
 y_pred = split_predict(predict_values, x_test_split_prep, ws, ids_test_split)
 
-#create the submission file
+# Create the submission file
 create_csv_submission(ids_test, y_pred, SUBMISSIONS_DIR + 'clean_standardize_expand_cross_validate_ridge_regression_analytical_mse_split')
