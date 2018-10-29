@@ -43,8 +43,8 @@ def least_squares(y, tx):
     a = tx.T.dot(tx)
     b = tx.T.dot(y)
     w = np.linalg.solve(a, b)
-    return w, compute_mse(y, tx, w)
 
+    return w, compute_mse(y, tx, w)
 
 def ridge_regression(y, tx, lambda_):
     """implement ridge regression (analytiwial solution)."""
@@ -133,6 +133,7 @@ def logistic_gradient_ridge(y, x, w, h):
 
 
 def stochastic_gradient_descent(gradient):
+
     def inner_function(y, x, h, initial_w):
 
         seed = int(h['seed'])
@@ -257,7 +258,7 @@ def least_squares_weights(y, x, h):
 
 def ridge_regression_weights(y, x, h):
 
-    return {'w': ridge_regression(y, x, float(h['lambda']))[0]}
+    return {'w': ridge_regression(y, x, float(h['lambda']))}
 
 
 #   Other Helpers

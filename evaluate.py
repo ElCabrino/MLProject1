@@ -40,7 +40,9 @@ def plot_heatmap(res, value, x_axis, y_axis, max_value=float('inf')):
     heatmap = np.vectorize(lambda params: find_value(*params))(heatmap_params)
     heatmap = np.where(heatmap > max_value, max_value, heatmap)
 
-    sns.heatmap(heatmap, cmap='hot_r', xticklabels=x_axis_values, yticklabels=y_axis_values)
+    ax = sns.heatmap(heatmap, cmap='plasma_r', xticklabels=x_axis_values, yticklabels=y_axis_values)
+    ax.set_xlabel(x_axis)
+    ax.set_ylabel(y_axis)
 
 def find_arg_min(res, value):
     val = np.vectorize(lambda x: x[value])(res)
