@@ -7,6 +7,7 @@ import datetime
 from helpers import *
 from costs import *
 from features import *
+import re
 
 def load_csv_data(data_path, sub_sample):
     """Loads data and returns y (class labels), tX (features) and ids (event ids)"""
@@ -52,14 +53,59 @@ def create_csv_submission(ids, y_pred, name):
 
 
 # --
-# -- Custom Functions
+# -- Custom Functions   0.21174
 # --
 
 def dictionarify(w):
     return { f'w{i[0]}': w for i, w in np.ndenumerate(w) }
 
+def encode_w(w):
+    return '|'.join(map(lambda wi: str(wi), w))
 
-def find_arg_min(res, value):
-    val = np.vectorize(lambda x: x[value])(res)
-    index = int(np.where(val == val.min())[0][0])
-    return res[index]
+def decode_w(w):
+    return np.array([float(x) for x in str(w)[2:-1].split('|')])
+
+def encode_ws(d):
+
+    d = { **d }
+
+    for key, value in sorted(d.items()):
+        if re.match('w_\d+', key):
+            d[key] = encode_w(value)
+
+    return d
+
+def decode_ws(d):
+
+    return [decode_w(w) for w in extract_ws(d) ]
+
+def extract_ws(d):
+
+    array = []
+
+    for key, value in sorted(d.items()):
+        if re.match('w_\d+', key):
+            array.append(value)
+
+    return array
+
+
+def remove_ws(d):
+
+    d_mut = { ** d }
+
+    for key, _ in d.items():
+        if re.match('^w', key):
+            del d_mut[key]
+
+    return d_mut
+
+def remove_h(d, h):
+
+    d_mut = { ** d}
+
+    for key, _ in h.items():
+        if key in d:
+            del d_mut[key]
+
+    return d_mut

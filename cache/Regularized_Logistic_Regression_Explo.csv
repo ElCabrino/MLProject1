@@ -1,0 +1,2 @@
+batch_size,degree,gamma,k_fold,lambda,n_iters,seed,mse_te,mse_tr
+1,4,1e-07,4,1e-08,1000,0,0.6896430727585345,0.6896604235218645

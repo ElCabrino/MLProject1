@@ -1,6 +1,7 @@
 import os.path
 import csv
 import numpy as np
+from helpers import *
 
 
 class Cache:
@@ -16,7 +17,7 @@ class Cache:
             self.array = None
 
     def genArray(self):
-        self.array = np.genfromtxt(self.filename, delimiter=',', names=True, case_sensitive=True)
+        self.array = np.genfromtxt(self.filename, delimiter=',', names=True, case_sensitive=True, dtype=None)
 
     def headers(self):
         return self.hyperparams_names + self.values_names
@@ -35,9 +36,12 @@ class Cache:
         if res.shape[0] == 0:
             return None
         else:
-            return res[0]
+            res = dict(list(zip(res.dtype.names, *res)))
+            return res
 
     def put(self, hyperparams, values):
+
+        values = remove_h(values, hyperparams)
 
         if self.contains(hyperparams):
             # For now, just avoid duplicates

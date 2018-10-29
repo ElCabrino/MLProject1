@@ -2,6 +2,7 @@
 # gradient descent.
 import numpy as np
 from costs import *
+from splits import *
 
 
 def compute_gradient(y, tx, w):
@@ -34,12 +35,9 @@ def compute_stoch_gradient(y, tx, w):
     grad = -tx.T.dot(err) / len(err)
     return grad, err
 
-def logistic_function(x):
-	return np.exp(x)/(1+np.exp(x))
-
 def compute_logistic_gradient(y, tx, w):
     """Compute gradient for the logistic regression algorithm"""
-    return tx.T@(logistic_function(tx@w)-y)
+    return tx.T @ (logistic_function(tx @ w) - y) / y.shape[0]
 
 def compute_S(tx, w):
     """"Compute S matrix for second order logistic regression"""
@@ -52,34 +50,8 @@ def compute_S(tx, w):
 
 def compute_H(tx, w):
     """Compute H matrix for second order logistic regression"""
-    S = compute_S(tx, w)   
+    S = compute_S(tx, w)
     return tx.T@S@tx
-
-
-def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
-    """
-    Generate a minibatch iterator for a dataset.
-    Takes as input two iterables (here the output desired values 'y' and the input data 'tx')
-    Outputs an iterator which gives mini-batches of `batch_size` matching elements from `y` and `tx`.
-    Data can be randomly shuffled to avoid ordering in the original data messing with the randomness of the minibatches.
-    Example of use :
-    for minibatch_y, minibatch_tx in batch_iter(y, tx, 32):
-        <DO-SOMETHING>
-    """
-    data_size = len(y)
-
-    if shuffle:
-        shuffle_indices = np.random.permutation(np.arange(data_size))
-        shuffled_y = y[shuffle_indices]
-        shuffled_tx = tx[shuffle_indices]
-    else:
-        shuffled_y = y
-        shuffled_tx = tx
-    for batch_num in range(num_batches):
-        start_index = batch_num * batch_size
-        end_index = min((batch_num + 1) * batch_size, data_size)
-        if start_index != end_index:
-            yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
 
 def newton_method(y, tx, initial_w, batch_size, max_iters, gamma):
     "Second order Logistic Regression with SGD"
@@ -89,7 +61,7 @@ def newton_method(y, tx, initial_w, batch_size, max_iters, gamma):
             H = compute_H(tx_batch, w)
             H_inv = np.linalg.inv(H)
             grad = compute_logistic_gradient(y_batch, tx_batch, w)
-            w = w - gamma * H_inv@grad
+            w = w - gamma * H_inv @ grad
     return w
 
 def reg_logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma, lambda_):
@@ -98,15 +70,20 @@ def reg_logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma, lamb
     for n_iter in range(max_iters):
         for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
             grad = compute_logistic_gradient(y_batch, tx_batch, w)
-            grad += lambda_*w
+            grad += lambda_ * w
             w = w - gamma * grad
     return w
 
-def logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma):
+def logistic_regression(y, tx, initial_w, batch_size, max_iters, gamma, seed):
     "First order Logistic Regression with SGD"
+
     w = initial_w
+    seed_iter = seed
+
     for n_iter in range(max_iters):
-        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
+
+        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1, seed=seed_iter):
+
             grad = compute_logistic_gradient(y_batch, tx_batch, w)
             w = w - gamma * grad
     return w
@@ -119,7 +96,7 @@ def lasso_stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, g
         for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1): 
             grad, _ = compute_stoch_gradient(y_batch, tx_batch, w)
             #Lasso regularization
-            grad += [lambd if w_i != 0 else 0 for w_i in w]
+            grad += [lambd * np.sign(w_i) if w_i != 0 else 0 for w_i in w]
             w = w - gamma * grad
     return w
 
