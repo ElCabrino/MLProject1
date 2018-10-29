@@ -1,6 +1,7 @@
 # This file contains all functions that allow to cross-validate a model
 # into training and testing subsets.
 import numpy as np
+from collections import defaultdict
 
 
 def cross_validate(fit, validate):

@@ -56,7 +56,7 @@ def compute_error_count(predict):
 #   than one error at a time. In order to do this, we used these aggregated
 #   functions that call several loss functions in parallel
 
-def mse(y, x, w):
+def mse(y, x, w, h):
 
     return {
         'mse' : compute_mse(y, x, w),
@@ -67,7 +67,7 @@ def mse(y, x, w):
 def mse_and_ridge(y, x, w, h):
 
     lambda_ = float(h['lambda'])
-
+    
     mse = compute_mse(y, x, w)
     ridge_norm = np.linalg.norm(w, 2) * lambda_
 
