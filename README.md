@@ -18,7 +18,6 @@ Currently **31th** with **83.237%** of correct predictions.
 |  `costs.py` | implements different costs functions |
 | `evaluate.py` | implements functions to find the best parameters for a model |
 |  `features.py` | implements differents features manipulation (polynomial expansion, standardization...) |
-|  `gradients.py` | implements differents regression models based on the gradient descent |
 |  `helpers.py` | provided helpers file with added function to encode the model's weights |
 | `implementations.py` | implements required functions and some others functions to create analytical and descent models |
 | `predict.py` | implements functions to predict labels (0 or 1) with given weights|
@@ -30,6 +29,7 @@ Currently **31th** with **83.237%** of correct predictions.
 - `test/cache`: contains cache results of models with different parameters when use the sub sample mode.
 - `cache`: contains cache results of models with different parameters when use the sub sample mode.
 - `submissions`: contains results of prediction we did on the test dataset.
+- `data`: contains the two given files train.csv and test.csv (they have to be placed here before running any model)
 
 ## Tutorial
 
